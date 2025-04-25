@@ -1,6 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+)
 
 type Node struct {
 	Vertex    string
@@ -201,6 +208,69 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 	return path
 }
 
-func DBGAssembler(fastq_filename string) string {
-	return ""
+func DBGAssembler(fastq_filename string, kmer_length int) string {
+	fastqFile, err := os.Open(fastq_filename)
+	if err != nil {
+		log.Fatalf("Failed to open FASTQ file: %v", err)
+	}
+	defer fastqFile.Close()
+
+	scanner := bufio.NewScanner(fastqFile)
+
+	reads := []string{}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+			continue
+		}
+
+		read := strings.ToLower(strings.TrimSpace(line))
+		reads = append(reads, read)
+	}
+
+	de_bruijn_graph := construct_de_bruijn_graph(reads, kmer_length)
+	fmt.Println("DBGAssembler: de_bruijn_graph: ", de_bruijn_graph)
+	if !check_graph_degree(de_bruijn_graph) {
+		fmt.Println("DBGAssembler: graph degree is not valid")
+		return ""
+	}
+
+	path := find_eulerian_path(de_bruijn_graph)
+	if len(path) == 0 {
+		fmt.Println("DBGAssembler: no path found")
+		return ""
+	}
+
+	// assemble the reads from the path
+	assembled_read := ""
+	for _, vertex := range path {
+		assembled_read += vertex[len(vertex)-1:]
+	}
+
+	// save the assembled read to a FASTA file
+	fastaFile, err := os.Create(fastq_filename[:len(fastq_filename)-6] + "_dbg.fasta")
+	if err != nil {
+		log.Fatalf("Failed to create FASTA file: %v", err)
+	}
+	defer fastaFile.Close()
+
+	fastaFile.WriteString(">DBG_assembled_read\n")
+	fastaFile.WriteString(assembled_read)
+
+	return assembled_read
+}
+
+func main() {
+	kmer_length := 40
+	if len(os.Args) == 3 {
+		var err error
+		kmer_length, err = strconv.Atoi(os.Args[2])
+		if err != nil {
+			fmt.Println("Usage: go run dbg.go <fastq_filename> <kmer_length>")
+			os.Exit(1)
+		}
+	}
+
+	DBGAssembler(os.Args[1], kmer_length)
 }

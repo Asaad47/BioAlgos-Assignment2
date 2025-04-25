@@ -20,4 +20,5 @@ for the pdf report:
   - I used it while coding for all files.
   - It uses a mix of LLMs including GPT-4, Claude, Deepseek and Gemini.
   - I used the pro tier of Cursor.
-- I used ChatGPT with the `gpt-4o` model to write the test cases in `dbg_test.go` file.
+- I used ChatGPT with the `gpt-4o` model to write:
+  - test cases in `dbg_test.go` file.
