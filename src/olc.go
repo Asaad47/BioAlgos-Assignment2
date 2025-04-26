@@ -2,10 +2,8 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -69,16 +67,16 @@ func OLCAssembler(fastq_filename string, min_overlap int) string {
 	return consensus
 }
 
-func main() {
-	min_overlap := 100
-	if len(os.Args) == 3 {
-		var err error
-		min_overlap, err = strconv.Atoi(os.Args[2])
-		if err != nil {
-			fmt.Println("Usage: go run olc.go <fastq_filename> <min_overlap>")
-			os.Exit(1)
-		}
-	}
+// func main() {
+// 	min_overlap := 100
+// 	if len(os.Args) == 3 {
+// 		var err error
+// 		min_overlap, err = strconv.Atoi(os.Args[2])
+// 		if err != nil {
+// 			fmt.Println("Usage: go run olc.go <fastq_filename> <min_overlap>")
+// 			os.Exit(1)
+// 		}
+// 	}
 
-	OLCAssembler(os.Args[1], min_overlap)
-}
+// 	OLCAssembler(os.Args[1], min_overlap)
+// }

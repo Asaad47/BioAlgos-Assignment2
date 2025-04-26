@@ -78,6 +78,8 @@ func check_graph_degree(de_bruijn_graph map[string]Node) bool {
 	return found_out_more_than_in <= 1 && found_in_more_than_out <= 1
 }
 
+// Assumes the graph passes the degree check, which implies the graph is nice
+// (i.e. collection of cycles or with a single starting vertex)
 func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 	// Hierholzer algorithm to find an Eulerian path in the graph
 
@@ -206,6 +208,11 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 	}
 
 	return path
+}
+
+// Doesn't assume the graph passes the degree check. Can be any graph.
+func find_all_eulerian_paths(de_bruijn_graph map[string]Node) [][]string {
+	return [][]string{}
 }
 
 func DBGAssembler(fastq_filename string, kmer_length int) string {
