@@ -185,23 +185,27 @@ func TestFindAllEulerianPaths(t *testing.T) {
 	}
 	expectedPaths5 := [][]string{
 		{"A", "B", "C", "A"},
+		{"B", "C", "A", "B"},
+		{"C", "A", "B", "C"},
 	}
 	paths5 := find_all_eulerian_paths(graph5)
 	// For cycles, we need to check if any of the cyclic permutations match the expected path
 	foundCycle := false
-	expectedCycleStr := strings.Join(expectedPaths5[0], ",")
-	for _, path := range paths5 {
-		// Check for cyclic permutations
-		for i := 0; i < len(path); i++ {
-			rotatedPath := append(path[i:], path[:i]...)
-			rotatedPathStr := strings.Join(rotatedPath, ",")
-			if rotatedPathStr == expectedCycleStr {
-				foundCycle = true
+	for _, expectedPath := range expectedPaths5 {
+		expectedCycleStr := strings.Join(expectedPath, ",")
+		for _, path := range paths5 {
+			// Check for cyclic permutations
+			for i := 0; i < len(path); i++ {
+				rotatedPath := append(path[i:], path[:i]...)
+				rotatedPathStr := strings.Join(rotatedPath, ",")
+				if rotatedPathStr == expectedCycleStr {
+					foundCycle = true
+					break
+				}
+			}
+			if foundCycle {
 				break
 			}
-		}
-		if foundCycle {
-			break
 		}
 	}
 	if !foundCycle || len(paths5) != 1 { // Ensure only one unique cycle is found

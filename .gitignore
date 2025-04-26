@@ -3,3 +3,12 @@
 toy_dataset/
 synthetic_dataset/
 .aider*
+
+report/report.pdf
+
+report/report.aux
+report/report.log
+report/report.out
+report/report.fdb_latexmk
+report/report.fls
+report/report.synctex.gz
