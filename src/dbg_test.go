@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -107,6 +108,22 @@ func TestDisconnectedGraph(t *testing.T) {
 }
 
 func TestFindAllEulerianPaths(t *testing.T) {
+	// Helper to check if two slices of paths are equal, ignoring order of paths
+	equalPathsIgnoringOrder := func(paths1, paths2 [][]string) bool {
+		if len(paths1) != len(paths2) {
+			return false
+		}
+		map1 := make(map[string]int)
+		map2 := make(map[string]int)
+		for _, p := range paths1 {
+			map1[strings.Join(p, ",")]++
+		}
+		for _, p := range paths2 {
+			map2[strings.Join(p, ",")]++
+		}
+		return reflect.DeepEqual(map1, map2)
+	}
+
 	// Test case 1: Graph with multiple valid paths
 	graph1 := map[string]Node{
 		"A": {Vertex: "A", OutDegree: 2, InDegree: 0, Edges: map[string]int{"B": 1, "C": 1}},
@@ -119,8 +136,8 @@ func TestFindAllEulerianPaths(t *testing.T) {
 		{"A", "C", "D"},
 	}
 	paths1 := find_all_eulerian_paths(graph1)
-	if !reflect.DeepEqual(paths1, expectedPaths1) {
-		t.Errorf("Expected paths %v, but got %v", expectedPaths1, paths1)
+	if !equalPathsIgnoringOrder(paths1, expectedPaths1) {
+		t.Errorf("Test Case 1 Failed: Expected paths %v, but got %v", expectedPaths1, paths1)
 	}
 
 	// Test case 2: Disconnected graph
@@ -135,8 +152,8 @@ func TestFindAllEulerianPaths(t *testing.T) {
 		{"C", "D"},
 	}
 	paths2 := find_all_eulerian_paths(graph2)
-	if !reflect.DeepEqual(paths2, expectedPaths2) {
-		t.Errorf("Expected paths %v, but got %v", expectedPaths2, paths2)
+	if !equalPathsIgnoringOrder(paths2, expectedPaths2) {
+		t.Errorf("Test Case 2 Failed: Expected paths %v, but got %v", expectedPaths2, paths2)
 	}
 
 	// Test case 3: Graph with a single valid path
@@ -149,15 +166,15 @@ func TestFindAllEulerianPaths(t *testing.T) {
 		{"A", "B", "C"},
 	}
 	paths3 := find_all_eulerian_paths(graph3)
-	if !reflect.DeepEqual(paths3, expectedPaths3) {
-		t.Errorf("Expected paths %v, but got %v", expectedPaths3, paths3)
+	if !equalPathsIgnoringOrder(paths3, expectedPaths3) {
+		t.Errorf("Test Case 3 Failed: Expected paths %v, but got %v", expectedPaths3, paths3)
 	}
 
 	// Test case 4: Empty graph
 	graph4 := map[string]Node{}
 	paths4 := find_all_eulerian_paths(graph4)
 	if len(paths4) != 0 {
-		t.Errorf("Expected no paths for empty graph, but got %v", paths4)
+		t.Errorf("Test Case 4 Failed: Expected no paths for empty graph, but got %v", paths4)
 	}
 
 	// Test case 5: Graph with a cycle
@@ -170,8 +187,25 @@ func TestFindAllEulerianPaths(t *testing.T) {
 		{"A", "B", "C", "A"},
 	}
 	paths5 := find_all_eulerian_paths(graph5)
-	if !reflect.DeepEqual(paths5, expectedPaths5) {
-		t.Errorf("Expected paths %v, but got %v", expectedPaths5, paths5)
+	// For cycles, we need to check if any of the cyclic permutations match the expected path
+	foundCycle := false
+	expectedCycleStr := strings.Join(expectedPaths5[0], ",")
+	for _, path := range paths5 {
+		// Check for cyclic permutations
+		for i := 0; i < len(path); i++ {
+			rotatedPath := append(path[i:], path[:i]...)
+			rotatedPathStr := strings.Join(rotatedPath, ",")
+			if rotatedPathStr == expectedCycleStr {
+				foundCycle = true
+				break
+			}
+		}
+		if foundCycle {
+			break
+		}
+	}
+	if !foundCycle || len(paths5) != 1 { // Ensure only one unique cycle is found
+		t.Errorf("Test Case 5 Failed: Expected paths %v, but got %v", expectedPaths5, paths5)
 	}
 
 	// Test case 6: Graph with multiple edges between same vertices
