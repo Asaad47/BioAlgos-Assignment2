@@ -428,39 +428,63 @@ func main() {
 
 	// OLCAssembler(os.Args[1], min_overlap)
 
-	reads := []string{"a_long_long",
-		"_long_long_",
-		"long_long_l",
-		"ong_long_lo",
-		"ng_long_lon",
-		"g_long_long",
-		"_long_long_",
-		"long_long_t",
-		"ong_long_ti",
-		"ng_long_tim",
-		"g_long_time",
-		"_long_time_",
-		"long_time_a",
-		"ong_time_ag",
-		"ng_time_ago"}
-	min_overlap := 5
+	// debugging
+	// reads := []string{"a_long_long",
+	// 	"_long_long_",
+	// 	"long_long_l",
+	// 	"ong_long_lo",
+	// 	"ng_long_lon",
+	// 	"g_long_long",
+	// 	"_long_long_",
+	// 	"long_long_t",
+	// 	"ong_long_ti",
+	// 	"ng_long_tim",
+	// 	"g_long_time",
+	// 	"_long_time_",
+	// 	"long_time_a",
+	// 	"ong_time_ag",
+	// 	"ng_time_ago"}
+
+	fastq_filename := "../toy_dataset/reads_r.fastq"
+	fastqFile, err := os.Open(fastq_filename)
+	if err != nil {
+		log.Fatalf("Failed to open FASTQ file: %v", err)
+	}
+	defer fastqFile.Close()
+
+	scanner := bufio.NewScanner(fastqFile)
+
+	reads := []string{}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+			continue
+		}
+
+		read := strings.ToLower(strings.TrimSpace(line))
+		reads = append(reads, read)
+	}
+
+	min_overlap := 40
 	overlap_graph := overlap(reads, min_overlap)
 
-	for read, edges := range overlap_graph {
-		fmt.Println(read)
-		for otherRead, overlapLen := range edges.outEdges {
-			fmt.Println("    ", otherRead, overlapLen)
-		}
-	}
+	// for read, edges := range overlap_graph {
+	// 	fmt.Println(read)
+	// 	for otherRead, overlapLen := range edges.outEdges {
+	// 		fmt.Println("    ", otherRead, overlapLen)
+	// 	}
+	// }
 
 	fmt.Println("------ before layout ------")
 	fmt.Println(layout(overlap_graph))
 	fmt.Println("------ after layout ------")
 
 	for read, edges := range overlap_graph {
-		fmt.Println(read)
+		fmt.Println("** READ:", read)
 		for otherRead, overlapLen := range edges.outEdges {
-			fmt.Println("    ", otherRead, overlapLen)
+			fmt.Println("    OTHER READ:", otherRead)
+			fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
 		}
 	}
 }
