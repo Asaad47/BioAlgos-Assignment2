@@ -254,11 +254,21 @@ import (
 // 	return overlap_graph
 // }
 
-func overlap(reads []string, min_overlap int) map[string]map[string]int {
+type ContigNode struct {
+	read     string
+	outEdges map[string]int
+	inEdges  map[string]int
+}
+
+func overlap(reads []string, min_overlap int) map[string]ContigNode {
 	// naive implementation
-	overlap_graph := make(map[string]map[string]int)
+	overlap_graph := make(map[string]ContigNode)
 	for _, read := range reads {
-		overlap_graph[read] = make(map[string]int)
+		overlap_graph[read] = ContigNode{
+			read:     read,
+			outEdges: make(map[string]int),
+			inEdges:  make(map[string]int),
+		}
 	}
 
 	for _, read := range reads {
@@ -269,7 +279,8 @@ func overlap(reads []string, min_overlap int) map[string]map[string]int {
 
 			for i := 1; i < len(read)-min_overlap; i++ {
 				if read[i:] == otherRead[:len(read)-i] {
-					overlap_graph[read][otherRead] = len(read) - i
+					overlap_graph[read].outEdges[otherRead] = len(read) - i
+					overlap_graph[otherRead].inEdges[read] = len(read) - i
 					break
 				}
 			}
@@ -279,21 +290,15 @@ func overlap(reads []string, min_overlap int) map[string]map[string]int {
 	return overlap_graph
 }
 
-// type ContigNode struct {
-// 	read     string
-// 	outEdges map[string]int
-// 	inEdges  map[string]int
-// }
-
-func layout(overlap_graph map[string]map[string]int) []string {
+func layout(overlap_graph map[string]ContigNode) []string {
 	// first implementation: use reduction of inferrible edges in the overlap graph
 	// source: https://www.cs.jhu.edu/~langmea/resources/lecture_notes/assembly_olc.pdf
 
 	toBeRemoved := []string{}
 	for read, edges := range overlap_graph {
-		for otherRead, overlapLen := range edges {
-			for furtherRead, otherOverlapLen := range overlap_graph[otherRead] {
-				if overlap_graph[read][furtherRead] == overlapLen+otherOverlapLen-len(read) {
+		for otherRead, overlapLen := range edges.outEdges {
+			for furtherRead, otherOverlapLen := range overlap_graph[otherRead].outEdges {
+				if overlap_graph[read].outEdges[furtherRead] == overlapLen+otherOverlapLen-len(read) {
 					// remove the edge between read and furtherRead as it is inferrible
 					toBeRemoved = append(toBeRemoved, read+" "+furtherRead)
 				}
@@ -305,14 +310,71 @@ func layout(overlap_graph map[string]map[string]int) []string {
 		parts := strings.Split(edge, " ")
 		read := parts[0]
 		otherRead := parts[1]
-		delete(overlap_graph[read], otherRead)
+		delete(overlap_graph[read].outEdges, otherRead)
+		delete(overlap_graph[otherRead].inEdges, read)
 	}
 
-	return []string{}
+	reads := []string{}
+	for read := range overlap_graph {
+		reads = append(reads, read)
+	}
+
+	// combine single-edge reads
+	for _, read := range reads {
+		for {
+			if len(overlap_graph[read].outEdges) == 1 {
+				otherRead := ""
+				for otherRead = range overlap_graph[read].outEdges {
+					break
+				}
+				if len(overlap_graph[otherRead].inEdges) == 1 {
+					// combine the two reads
+					newRead := read + otherRead[overlap_graph[read].outEdges[otherRead]:]
+					newContigNode := ContigNode{
+						read:     newRead,
+						outEdges: overlap_graph[otherRead].outEdges,
+						inEdges:  overlap_graph[read].inEdges,
+					}
+
+					for furtherRead, overlapLen := range overlap_graph[otherRead].outEdges {
+						overlap_graph[furtherRead].inEdges[newRead] = overlapLen
+						delete(overlap_graph[furtherRead].inEdges, otherRead)
+					}
+
+					for previousRead := range overlap_graph[read].inEdges {
+						overlap_graph[previousRead].outEdges[newRead] = overlap_graph[read].inEdges[previousRead]
+						delete(overlap_graph[previousRead].outEdges, read)
+					}
+
+					// update the overlap graph
+					overlap_graph[newRead] = newContigNode
+					delete(overlap_graph, read)
+					delete(overlap_graph, otherRead)
+
+					read = newRead
+				} else {
+					break
+				}
+			} else {
+				break
+			}
+		}
+	}
+
+	contigs := []string{}
+	for read := range overlap_graph {
+		if len(overlap_graph[read].outEdges) <= 1 && len(overlap_graph[read].inEdges) <= 1 {
+			contigs = append(contigs, read)
+		}
+	}
+
+	return contigs
 }
 
 func consensus(read_layout []string) string {
-	return ""
+	consensus := ""
+	// take contigs and line them up, take consensus by majority vote
+	return consensus
 }
 
 func OLCAssembler(fastq_filename string, min_overlap int) string {
@@ -386,7 +448,7 @@ func main() {
 
 	for read, edges := range overlap_graph {
 		fmt.Println(read)
-		for otherRead, overlapLen := range edges {
+		for otherRead, overlapLen := range edges.outEdges {
 			fmt.Println("    ", otherRead, overlapLen)
 		}
 	}
@@ -397,7 +459,7 @@ func main() {
 
 	for read, edges := range overlap_graph {
 		fmt.Println(read)
-		for otherRead, overlapLen := range edges {
+		for otherRead, overlapLen := range edges.outEdges {
 			fmt.Println("    ", otherRead, overlapLen)
 		}
 	}
