@@ -53,6 +53,70 @@ func constructDeBruijnGraph(reads []string, kmer_length int) map[string]Node {
 	return deBruijnGraph
 }
 
+func walkGraph(deBruijnGraph map[string]Node) []string {
+	contigs := []string{}
+	visited := make(map[string]bool)
+
+	for nodeID, node := range deBruijnGraph {
+		// start only from nodes that are not 1-in-1-out
+		if len(node.InEdges) != 1 || len(node.OutEdges) != 1 {
+			for nextNode := range node.OutEdges {
+				path := nodeID
+				current := nextNode
+
+				for {
+					if visited[current] {
+						break
+					}
+					visited[current] = true
+					path += current[len(current)-1:] // append last base of kmer
+
+					next := deBruijnGraph[current]
+					if len(next.InEdges) != 1 || len(next.OutEdges) != 1 {
+						break
+					}
+					for k := range next.OutEdges {
+						current = k
+						break
+					}
+				}
+
+				contigs = append(contigs, path)
+			}
+		}
+	}
+
+	// Also check for cycles (1-in-1-out everywhere)
+	for nodeID := range deBruijnGraph {
+		if visited[nodeID] {
+			continue
+		}
+		path := nodeID
+		current := nodeID
+
+		for {
+			visited[current] = true
+			next := deBruijnGraph[current]
+			if len(next.OutEdges) != 1 {
+				break
+			}
+			var nextNode string
+			for k := range next.OutEdges {
+				nextNode = k
+				break
+			}
+			if visited[nextNode] {
+				break
+			}
+			path += nextNode[len(nextNode)-1:]
+			current = nextNode
+		}
+		contigs = append(contigs, path)
+	}
+
+	return contigs
+}
+
 func reduceGraph(deBruijnGraph map[string]Node) map[string]Node {
 	// reduce nodes that have single in edge and single out edge
 
@@ -158,106 +222,6 @@ func reduceGraph(deBruijnGraph map[string]Node) map[string]Node {
 	return deBruijnGraph
 }
 
-func walkGraphHelper(deBruijnGraph map[string]Node, current_vertex string, visited map[string]bool, current_path string, paths *[]string) {
-	visited[current_vertex] = true
-	current_path += current_vertex[len(current_vertex)-1:] // TODO: check if this is correct
-	if len(deBruijnGraph[current_vertex].OutEdges) == 0 {
-		*paths = append(*paths, current_path)
-		return
-	}
-	for next_vertex := range deBruijnGraph[current_vertex].OutEdges {
-		if !visited[next_vertex] {
-			walkGraphHelper(deBruijnGraph, next_vertex, visited, current_path, paths)
-		} else {
-			// found a cycle
-			*paths = append(*paths, current_path)
-		}
-	}
-}
-
-// func walkGraph(deBruijnGraph map[string]Node) []string {
-// 	paths := []string{}
-// 	starting_vertices := []string{}
-// 	for vertex := range deBruijnGraph {
-// 		if len(deBruijnGraph[vertex].InEdges) == 0 {
-// 			starting_vertices = append(starting_vertices, vertex)
-// 		}
-// 	}
-// 	if len(starting_vertices) == 0 {
-// 		// cyclic graph
-// 		// TODO: handle cyclic graph
-// 	}
-// 	for _, starting_vertex := range starting_vertices {
-// 		visited := make(map[string]bool)
-// 		walkGraphHelper(deBruijnGraph, starting_vertex, visited, starting_vertex[:len(starting_vertex)-1], &paths)
-// 	}
-// 	return paths
-// }
-
-func walkGraph(deBruijnGraph map[string]Node) []string {
-	contigs := []string{}
-	visited := make(map[string]bool)
-
-	for nodeID, node := range deBruijnGraph {
-		// start only from nodes that are not 1-in-1-out
-		if len(node.InEdges) != 1 || len(node.OutEdges) != 1 {
-			for nextNode := range node.OutEdges {
-				path := nodeID
-				current := nextNode
-
-				for {
-					if visited[current] {
-						break
-					}
-					visited[current] = true
-					path += current[len(current)-1:] // append last base of kmer
-
-					next := deBruijnGraph[current]
-					if len(next.InEdges) != 1 || len(next.OutEdges) != 1 {
-						break
-					}
-					for k := range next.OutEdges {
-						current = k
-						break
-					}
-				}
-
-				contigs = append(contigs, path)
-			}
-		}
-	}
-
-	// Also check for cycles (1-in-1-out everywhere)
-	for nodeID := range deBruijnGraph {
-		if visited[nodeID] {
-			continue
-		}
-		path := nodeID
-		current := nodeID
-
-		for {
-			visited[current] = true
-			next := deBruijnGraph[current]
-			if len(next.OutEdges) != 1 {
-				break
-			}
-			var nextNode string
-			for k := range next.OutEdges {
-				nextNode = k
-				break
-			}
-			if visited[nextNode] {
-				break
-			}
-			path += nextNode[len(nextNode)-1:]
-			current = nextNode
-		}
-		contigs = append(contigs, path)
-	}
-
-	return contigs
-}
-
 func walkReducedGraphHelper(deBruijnGraph map[string]Node, current_vertex string, visited map[string]bool, current_path string, paths *[]string) {
 	visited[current_vertex] = true
 	current_path += current_vertex // TODO: check if this is correct
@@ -295,6 +259,27 @@ func walkReducedGraph(deBruijnGraph map[string]Node) []string {
 		walkReducedGraphHelper(deBruijnGraph, starting_vertex, visited, "", &paths)
 	}
 	return paths
+}
+
+func exportToGFA(graph map[string]Node, filename string) {
+	gfaFile, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("Failed to create GFA file: %v", err)
+	}
+	defer gfaFile.Close()
+
+	// Write segments (S lines)
+	for kmer := range graph {
+		gfaFile.WriteString("S\t" + kmer + "\t*\n")
+	}
+
+	// Write links (L lines)
+	for from, node := range graph {
+		for to := range node.OutEdges {
+			// All overlaps are of length k-1
+			gfaFile.WriteString("L\t" + from + "\t+\t" + to + "\t+\t" + strconv.Itoa(len(from)-1) + "M\n")
+		}
+	}
 }
 
 func DBGAssembler(fastq_filename string, kmer_length int) {
@@ -351,27 +336,6 @@ func DBGAssembler(fastq_filename string, kmer_length int) {
 	}
 }
 
-func exportToGFA(graph map[string]Node, filename string) {
-	gfaFile, err := os.Create(filename)
-	if err != nil {
-		log.Fatalf("Failed to create GFA file: %v", err)
-	}
-	defer gfaFile.Close()
-
-	// Write segments (S lines)
-	for kmer := range graph {
-		gfaFile.WriteString("S\t" + kmer + "\t*\n")
-	}
-
-	// Write links (L lines)
-	for from, node := range graph {
-		for to := range node.OutEdges {
-			// All overlaps are of length k-1
-			gfaFile.WriteString("L\t" + from + "\t+\t" + to + "\t+\t" + strconv.Itoa(len(from)-1) + "M\n")
-		}
-	}
-}
-
 func main() {
 	kmer_length := 40
 	fastq_filename := "../toy_dataset/reads_b.fastq"
@@ -387,53 +351,4 @@ func main() {
 	}
 
 	DBGAssembler(fastq_filename, kmer_length)
-
-	// // debugging
-	// fastqFile, err := os.Open("../toy_dataset/reads_r.fastq")
-	// if err != nil {
-	// 	log.Fatalf("Failed to open FASTQ file: %v", err)
-	// }
-	// defer fastqFile.Close()
-
-	// scanner := bufio.NewScanner(fastqFile)
-
-	// reads := []string{}
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// 	if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
-	// 		continue
-	// 	}
-
-	// 	read := strings.ToLower(strings.TrimSpace(line))
-	// 	reads = append(reads, read)
-	// }
-
-	// deBruijnGraph := constructDeBruijnGraph(reads, 35)
-	// // for k, v := range deBruijnGraph {
-	// // 	fmt.Println(k, v)
-	// // }
-
-	// fmt.Println("------ after reduction ------")
-	// reduced_deBruijnGraph := reduceGraph(deBruijnGraph)
-	// i := 0
-	// vertex_to_index := make(map[string]int)
-	// for k, v := range reduced_deBruijnGraph {
-	// 	vertex_to_index[k] = i
-	// 	i++
-	// 	fmt.Println("** vertex:", k)
-	// 	for edge, count := range v.OutEdges {
-	// 		fmt.Println("    edge:", edge)
-	// 		fmt.Println("    -- count:", count)
-	// 	}
-	// }
-	// fmt.Println("------ vertex to index ------")
-	// for k, v := range reduced_deBruijnGraph {
-	// 	fmt.Println("** vertex:", vertex_to_index[k])
-	// 	for edge, count := range v.OutEdges {
-	// 		fmt.Println("    edge:", vertex_to_index[edge])
-	// 		fmt.Println("    -- count:", count)
-	// 	}
-	// }
-
 }
