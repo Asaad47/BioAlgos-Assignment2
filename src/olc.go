@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -266,7 +267,7 @@ func overlap(reads []string, min_overlap int) map[string]map[string]int {
 				continue
 			}
 
-			for i := 0; i < len(read)-min_overlap; i++ {
+			for i := 1; i < len(read)-min_overlap; i++ {
 				if read[i:] == otherRead[:len(read)-i] {
 					overlap_graph[read][otherRead] = len(read) - i
 					break
@@ -278,7 +279,35 @@ func overlap(reads []string, min_overlap int) map[string]map[string]int {
 	return overlap_graph
 }
 
+// type ContigNode struct {
+// 	read     string
+// 	outEdges map[string]int
+// 	inEdges  map[string]int
+// }
+
 func layout(overlap_graph map[string]map[string]int) []string {
+	// first implementation: use reduction of inferrible edges in the overlap graph
+	// source: https://www.cs.jhu.edu/~langmea/resources/lecture_notes/assembly_olc.pdf
+
+	toBeRemoved := []string{}
+	for read, edges := range overlap_graph {
+		for otherRead, overlapLen := range edges {
+			for furtherRead, otherOverlapLen := range overlap_graph[otherRead] {
+				if overlap_graph[read][furtherRead] == overlapLen+otherOverlapLen-len(read) {
+					// remove the edge between read and furtherRead as it is inferrible
+					toBeRemoved = append(toBeRemoved, read+" "+furtherRead)
+				}
+			}
+		}
+	}
+
+	for _, edge := range toBeRemoved {
+		parts := strings.Split(edge, " ")
+		read := parts[0]
+		otherRead := parts[1]
+		delete(overlap_graph[read], otherRead)
+	}
+
 	return []string{}
 }
 
@@ -324,16 +353,52 @@ func OLCAssembler(fastq_filename string, min_overlap int) string {
 	return consensus
 }
 
-// func main() {
-// 	min_overlap := 100
-// 	if len(os.Args) == 3 {
-// 		var err error
-// 		min_overlap, err = strconv.Atoi(os.Args[2])
-// 		if err != nil {
-// 			fmt.Println("Usage: go run olc.go <fastq_filename> <min_overlap>")
-// 			os.Exit(1)
-// 		}
-// 	}
+func main() {
+	// min_overlap := 100
+	// if len(os.Args) == 3 {
+	// 	var err error
+	// 	min_overlap, err = strconv.Atoi(os.Args[2])
+	// 	if err != nil {
+	// 		fmt.Println("Usage: go run olc.go <fastq_filename> <min_overlap>")
+	// 		os.Exit(1)
+	// 	}
+	// }
 
-// 	OLCAssembler(os.Args[1], min_overlap)
-// }
+	// OLCAssembler(os.Args[1], min_overlap)
+
+	reads := []string{"a_long_long",
+		"_long_long_",
+		"long_long_l",
+		"ong_long_lo",
+		"ng_long_lon",
+		"g_long_long",
+		"_long_long_",
+		"long_long_t",
+		"ong_long_ti",
+		"ng_long_tim",
+		"g_long_time",
+		"_long_time_",
+		"long_time_a",
+		"ong_time_ag",
+		"ng_time_ago"}
+	min_overlap := 5
+	overlap_graph := overlap(reads, min_overlap)
+
+	for read, edges := range overlap_graph {
+		fmt.Println(read)
+		for otherRead, overlapLen := range edges {
+			fmt.Println("    ", otherRead, overlapLen)
+		}
+	}
+
+	fmt.Println("------ before layout ------")
+	fmt.Println(layout(overlap_graph))
+	fmt.Println("------ after layout ------")
+
+	for read, edges := range overlap_graph {
+		fmt.Println(read)
+		for otherRead, overlapLen := range edges {
+			fmt.Println("    ", otherRead, overlapLen)
+		}
+	}
+}
