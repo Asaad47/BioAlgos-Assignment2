@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
-type Node struct {
-	Vertex    string
-	OutDegree int
-	InDegree  int
-	Edges     map[string]int
+type Node struct { // Expanded kmer node. Represents a kmer and the edges leading to it and from it
+	kmer     string
+	OutEdges map[string]int
+	InEdges  map[string]int
 }
 
 func construct_de_bruijn_graph(reads []string, kmer_length int) map[string]Node {
@@ -29,27 +27,24 @@ func construct_de_bruijn_graph(reads []string, kmer_length int) map[string]Node 
 			prefixNode, ok := de_bruijn_graph[prefix]
 			if !ok {
 				prefixNode = Node{
-					Vertex:    prefix,
-					OutDegree: 0,
-					InDegree:  0,
-					Edges:     make(map[string]int),
+					kmer:     prefix,
+					OutEdges: make(map[string]int),
+					InEdges:  make(map[string]int),
 				}
 			}
-			prefixNode.Edges[suffix]++
-			prefixNode.OutDegree++
+			prefixNode.OutEdges[suffix]++
 			de_bruijn_graph[prefix] = prefixNode
 
 			// Same for suffix node
 			suffixNode, ok := de_bruijn_graph[suffix]
 			if !ok {
 				suffixNode = Node{
-					Vertex:    suffix,
-					OutDegree: 0,
-					InDegree:  0,
-					Edges:     make(map[string]int),
+					kmer:     suffix,
+					OutEdges: make(map[string]int),
+					InEdges:  make(map[string]int),
 				}
 			}
-			suffixNode.InDegree++
+			suffixNode.InEdges[prefix]++
 			de_bruijn_graph[suffix] = suffixNode
 		}
 	}
@@ -63,7 +58,15 @@ func check_graph_degree(de_bruijn_graph map[string]Node) bool {
 	found_in_more_than_out := 0 // in degree more than out degree by exactly 1
 
 	for _, node := range de_bruijn_graph {
-		switch node.OutDegree - node.InDegree {
+		out_degree := 0
+		in_degree := 0
+		for _, out_edge := range node.OutEdges {
+			out_degree += out_edge
+		}
+		for _, in_edge := range node.InEdges {
+			in_degree += in_edge
+		}
+		switch out_degree - in_degree {
 		case 0:
 			continue
 		case 1:
@@ -92,7 +95,15 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 	// find a starting vertex
 	start_vertex := ""
 	for vertex := range de_bruijn_graph {
-		if de_bruijn_graph[vertex].OutDegree-de_bruijn_graph[vertex].InDegree == 1 {
+		out_degree := 0
+		in_degree := 0
+		for _, out_edge := range de_bruijn_graph[vertex].OutEdges {
+			out_degree += out_edge
+		}
+		for _, in_edge := range de_bruijn_graph[vertex].InEdges {
+			in_degree += in_edge
+		}
+		if out_degree-in_degree == 1 {
 			start_vertex = vertex
 			break
 		}
@@ -116,7 +127,7 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 
 		current_vertex := short_path[len(short_path)-1]
 		next_vertex := ""
-		for edge := range de_bruijn_graph[current_vertex].Edges {
+		for edge := range de_bruijn_graph[current_vertex].OutEdges {
 			next_vertex = edge
 			break
 		}
@@ -136,7 +147,11 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 
 			// find a new starting vertex (should make cycle)
 			for vertex := range de_bruijn_graph {
-				if de_bruijn_graph[vertex].OutDegree > 0 {
+				out_degree := 0
+				for _, out_edge := range de_bruijn_graph[vertex].OutEdges {
+					out_degree += out_edge
+				}
+				if out_degree > 0 {
 					start_vertex = vertex
 					for i, v := range path {
 						if v == start_vertex {
@@ -159,7 +174,11 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 
 			// find new starting vertex
 			for vertex := range de_bruijn_graph {
-				if de_bruijn_graph[vertex].OutDegree > 0 {
+				out_degree := 0
+				for _, out_edge := range de_bruijn_graph[vertex].OutEdges {
+					out_degree += out_edge
+				}
+				if out_degree > 0 {
 					start_vertex = vertex
 					short_path = []string{start_vertex}
 					for i, v := range path {
@@ -180,23 +199,22 @@ func find_eulerian_path(de_bruijn_graph map[string]Node) []string {
 		// Update the graph
 		// Get the current node and update it
 		node := de_bruijn_graph[current_vertex]
-		node.Edges[next_vertex]--
-		node.OutDegree--
+		node.OutEdges[next_vertex]--
 		de_bruijn_graph[current_vertex] = node
 
 		// Get the next node and update it
 		next_node := de_bruijn_graph[next_vertex]
-		next_node.InDegree--
+		next_node.InEdges[current_vertex]--
 		de_bruijn_graph[next_vertex] = next_node
 
 		// Check if we need to delete the edge
-		if de_bruijn_graph[current_vertex].Edges[next_vertex] == 0 {
-			delete(de_bruijn_graph[current_vertex].Edges, next_vertex)
+		if de_bruijn_graph[current_vertex].OutEdges[next_vertex] == 0 {
+			delete(de_bruijn_graph[current_vertex].OutEdges, next_vertex)
 		}
-		if de_bruijn_graph[current_vertex].OutDegree == 0 && de_bruijn_graph[current_vertex].InDegree == 0 {
+		if len(de_bruijn_graph[current_vertex].OutEdges) == 0 && len(de_bruijn_graph[current_vertex].InEdges) == 0 {
 			delete(de_bruijn_graph, current_vertex)
 		}
-		if de_bruijn_graph[next_vertex].OutDegree == 0 && de_bruijn_graph[next_vertex].InDegree == 0 {
+		if len(de_bruijn_graph[next_vertex].OutEdges) == 0 && len(de_bruijn_graph[next_vertex].InEdges) == 0 {
 			delete(de_bruijn_graph, next_vertex)
 		}
 	}
@@ -215,7 +233,15 @@ func find_all_eulerian_paths(de_bruijn_graph map[string]Node) [][]string {
 	// find a starting vertex
 	starting_vertices := []string{}
 	for vertex := range de_bruijn_graph {
-		if de_bruijn_graph[vertex].OutDegree-de_bruijn_graph[vertex].InDegree >= 1 {
+		out_degree := 0
+		in_degree := 0
+		for _, out_edge := range de_bruijn_graph[vertex].OutEdges {
+			out_degree += out_edge
+		}
+		for _, in_edge := range de_bruijn_graph[vertex].InEdges {
+			in_degree += in_edge
+		}
+		if out_degree-in_degree >= 1 {
 			starting_vertices = append(starting_vertices, vertex)
 		}
 	}
@@ -232,8 +258,6 @@ func find_all_eulerian_paths(de_bruijn_graph map[string]Node) [][]string {
 
 	for len(starting_vertices) > 0 {
 		starting_vertex := starting_vertices[0]
-		start_in_degree := de_bruijn_graph[starting_vertex].InDegree
-		start_out_degree := de_bruijn_graph[starting_vertex].OutDegree
 
 		stack := []string{starting_vertex}
 
@@ -256,7 +280,7 @@ func find_all_eulerian_paths(de_bruijn_graph map[string]Node) [][]string {
 			visited[current_vertex] = true
 			path = append(path, current_vertex)
 			next_vertex := ""
-			for edge := range de_bruijn_graph[current_vertex].Edges {
+			for edge := range de_bruijn_graph[current_vertex].OutEdges {
 				next_vertex = edge
 				break
 			}
@@ -275,33 +299,33 @@ func find_all_eulerian_paths(de_bruijn_graph map[string]Node) [][]string {
 			stack = append(stack, next_vertex)
 
 			// remove the edge from the graph
-			de_bruijn_graph[current_vertex].Edges[next_vertex]--
+			de_bruijn_graph[current_vertex].OutEdges[next_vertex]--
 
 			// Update the vertex properties by creating a new vertex with updated values
 			vertex := de_bruijn_graph[current_vertex]
-			vertex.OutDegree--
+			vertex.OutEdges[next_vertex]--
 			de_bruijn_graph[current_vertex] = vertex
 
 			// Update the next vertex properties
 			nextVertex := de_bruijn_graph[next_vertex]
-			nextVertex.InDegree--
+			nextVertex.InEdges[current_vertex]--
 			de_bruijn_graph[next_vertex] = nextVertex
 
-			if de_bruijn_graph[current_vertex].Edges[next_vertex] == 0 {
-				delete(de_bruijn_graph[current_vertex].Edges, next_vertex)
+			if de_bruijn_graph[current_vertex].OutEdges[next_vertex] == 0 {
+				delete(de_bruijn_graph[current_vertex].OutEdges, next_vertex)
 			}
-			if de_bruijn_graph[current_vertex].OutDegree == 0 && de_bruijn_graph[current_vertex].InDegree == 0 {
+			if len(de_bruijn_graph[current_vertex].OutEdges) == 0 && len(de_bruijn_graph[current_vertex].InEdges) == 0 {
 				delete(de_bruijn_graph, current_vertex)
 			}
-			if de_bruijn_graph[next_vertex].OutDegree == 0 && de_bruijn_graph[next_vertex].InDegree == 0 {
+			if len(de_bruijn_graph[next_vertex].OutEdges) == 0 && len(de_bruijn_graph[next_vertex].InEdges) == 0 {
 				delete(de_bruijn_graph, next_vertex)
 			}
 		}
 
 		starting_vertex = starting_vertices[0]
-		start_in_degree_after := de_bruijn_graph[starting_vertex].InDegree
-		start_out_degree_after := de_bruijn_graph[starting_vertex].OutDegree
-		if start_in_degree_after == start_in_degree && start_out_degree_after == start_out_degree {
+		start_in_degree_after := de_bruijn_graph[starting_vertex].InEdges
+		start_out_degree_after := de_bruijn_graph[starting_vertex].OutEdges
+		if len(start_in_degree_after) == 0 && len(start_out_degree_after) == 0 {
 			starting_vertices = starting_vertices[1:]
 		} else {
 			// move the starting vertex to the end of the list
@@ -310,6 +334,111 @@ func find_all_eulerian_paths(de_bruijn_graph map[string]Node) [][]string {
 	}
 
 	return paths
+}
+
+func reduce_graph(de_bruijn_graph map[string]Node) map[string]Node {
+	// reduce nodes that have single in edge and single out edge
+
+	starting_vertices := []string{}
+	for vertex := range de_bruijn_graph {
+		if len(de_bruijn_graph[vertex].InEdges) != 1 {
+			starting_vertices = append(starting_vertices, vertex)
+		} else {
+			previous_vertex := ""
+			for edge := range de_bruijn_graph[vertex].InEdges {
+				previous_vertex = edge
+				break
+			}
+			if len(de_bruijn_graph[previous_vertex].OutEdges) != 1 {
+				starting_vertices = append(starting_vertices, vertex)
+			}
+		}
+	}
+	for _, vertex := range starting_vertices {
+		for {
+			if len(de_bruijn_graph[vertex].OutEdges) == 1 {
+				otherVertex := ""
+				for edge := range de_bruijn_graph[vertex].OutEdges {
+					otherVertex = edge
+					break
+				}
+				if len(de_bruijn_graph[otherVertex].InEdges) == 1 {
+					if len(de_bruijn_graph[otherVertex].OutEdges) == 1 {
+						// reduce nodes vertex, otherVertex, furtherVertex to newFirstVertex and newSecondVertex
+						furtherVertex := ""
+						for edge := range de_bruijn_graph[otherVertex].OutEdges {
+							furtherVertex = edge
+							break
+						}
+						if len(de_bruijn_graph[furtherVertex].InEdges) > 1 {
+							break
+						}
+
+						newFirstVertex := vertex + otherVertex[len(otherVertex)-1:] // this assumes using starting vertices as defined above
+						newFirstVertexNode := Node{
+							kmer:     newFirstVertex,
+							OutEdges: make(map[string]int),
+							InEdges:  de_bruijn_graph[vertex].InEdges,
+						}
+
+						newSecondVertex := otherVertex + furtherVertex[len(furtherVertex)-1:] // this assumes using starting vertices as defined above
+						newSecondVertexNode := Node{
+							kmer:     newSecondVertex,
+							OutEdges: de_bruijn_graph[furtherVertex].OutEdges,
+							InEdges:  make(map[string]int),
+						}
+
+						occurances := min(de_bruijn_graph[vertex].OutEdges[otherVertex], de_bruijn_graph[otherVertex].OutEdges[furtherVertex])
+						newFirstVertexNode.OutEdges[newSecondVertex] = occurances
+						newSecondVertexNode.InEdges[newFirstVertex] = occurances
+
+						for previousVertex := range de_bruijn_graph[vertex].InEdges {
+							de_bruijn_graph[previousVertex].OutEdges[newFirstVertex] = de_bruijn_graph[previousVertex].OutEdges[vertex]
+							delete(de_bruijn_graph[previousVertex].OutEdges, vertex)
+						}
+						for nextVertex := range de_bruijn_graph[furtherVertex].OutEdges {
+							de_bruijn_graph[nextVertex].InEdges[newSecondVertex] = de_bruijn_graph[nextVertex].InEdges[furtherVertex]
+							delete(de_bruijn_graph[nextVertex].InEdges, furtherVertex)
+						}
+
+						de_bruijn_graph[newFirstVertex] = newFirstVertexNode
+						de_bruijn_graph[newSecondVertex] = newSecondVertexNode
+						delete(de_bruijn_graph, vertex)
+						delete(de_bruijn_graph, otherVertex)
+						delete(de_bruijn_graph, furtherVertex)
+
+						vertex = newFirstVertex
+
+					} else if len(de_bruijn_graph[otherVertex].OutEdges) == 0 {
+						// reached end of the path
+						// reduce vertex, otherVertex to newVertex
+						newVertex := vertex[:1] + otherVertex
+						newVertexNode := Node{
+							kmer:     newVertex,
+							OutEdges: de_bruijn_graph[otherVertex].OutEdges,
+							InEdges:  de_bruijn_graph[vertex].InEdges,
+						}
+						for previousVertex := range de_bruijn_graph[vertex].InEdges {
+							de_bruijn_graph[previousVertex].OutEdges[newVertex] = de_bruijn_graph[previousVertex].OutEdges[vertex]
+							delete(de_bruijn_graph[previousVertex].OutEdges, vertex)
+						}
+						de_bruijn_graph[newVertex] = newVertexNode
+						delete(de_bruijn_graph, vertex)
+						delete(de_bruijn_graph, otherVertex)
+						break
+					} else {
+						break
+					}
+				} else {
+					break
+				}
+			} else {
+				break
+			}
+		}
+	}
+
+	return de_bruijn_graph
 }
 
 func DBGAssembler(fastq_filename string, kmer_length int) string {
@@ -374,43 +503,43 @@ func DBGAssembler(fastq_filename string, kmer_length int) string {
 }
 
 func main() {
-	kmer_length := 40
-	if len(os.Args) == 3 {
-		var err error
-		kmer_length, err = strconv.Atoi(os.Args[2])
-		if err != nil {
-			fmt.Println("Usage: go run dbg.go <fastq_filename> <kmer_length>")
-			os.Exit(1)
+	// kmer_length := 40
+	// if len(os.Args) == 3 {
+	// 	var err error
+	// 	kmer_length, err = strconv.Atoi(os.Args[2])
+	// 	if err != nil {
+	// 		fmt.Println("Usage: go run dbg.go <fastq_filename> <kmer_length>")
+	// 		os.Exit(1)
+	// 	}
+	// }
+
+	// DBGAssembler(os.Args[1], kmer_length)
+
+	// debugging
+	fastqFile, err := os.Open("../toy_dataset/reads_r.fastq")
+	if err != nil {
+		log.Fatalf("Failed to open FASTQ file: %v", err)
+	}
+	defer fastqFile.Close()
+
+	scanner := bufio.NewScanner(fastqFile)
+
+	reads := []string{}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+			continue
 		}
+
+		read := strings.ToLower(strings.TrimSpace(line))
+		reads = append(reads, read)
 	}
 
-	DBGAssembler(os.Args[1], kmer_length)
-
-	// // debugging
-	// fastqFile, err := os.Open("../toy_dataset/reads_b.fastq")
-	// if err != nil {
-	// 	log.Fatalf("Failed to open FASTQ file: %v", err)
-	// }
-	// defer fastqFile.Close()
-
-	// scanner := bufio.NewScanner(fastqFile)
-
-	// reads := []string{}
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// 	if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
-	// 		continue
-	// 	}
-
-	// 	read := strings.ToLower(strings.TrimSpace(line))
-	// 	reads = append(reads, read)
-	// }
-
-	// de_bruijn_graph := construct_de_bruijn_graph(reads, 40)
-	// for k, v := range de_bruijn_graph {
-	// 	fmt.Println(k, v)
-	// }
+	de_bruijn_graph := construct_de_bruijn_graph(reads, 45)
+	for k, v := range de_bruijn_graph {
+		fmt.Println(k, v)
+	}
 
 	// paths := find_all_eulerian_paths(de_bruijn_graph)
 	// longest_path := ""
@@ -429,4 +558,27 @@ func main() {
 	// 	}
 	// }
 	// fmt.Println(longest_path)
+
+	fmt.Println("------ after reduction ------")
+	reduced_de_bruijn_graph := reduce_graph(de_bruijn_graph)
+	i := 0
+	vertex_to_index := make(map[string]int)
+	for k, v := range reduced_de_bruijn_graph {
+		vertex_to_index[k] = i
+		i++
+		fmt.Println("** vertex:", k)
+		for edge, count := range v.OutEdges {
+			fmt.Println("    edge:", edge)
+			fmt.Println("    -- count:", count)
+		}
+	}
+	fmt.Println("------ vertex to index ------")
+	for k, v := range reduced_de_bruijn_graph {
+		fmt.Println("** vertex:", vertex_to_index[k])
+		for edge, count := range v.OutEdges {
+			fmt.Println("    edge:", vertex_to_index[edge])
+			fmt.Println("    -- count:", count)
+		}
+	}
+
 }
