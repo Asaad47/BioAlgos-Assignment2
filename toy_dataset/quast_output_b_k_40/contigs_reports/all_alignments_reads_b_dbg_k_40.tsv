@@ -1,0 +1,3 @@
+S1	E1	S2	E2	Reference	Contig	IDY	Ambiguous	Best_group
+333	1000	1	668	reference_b	DBG_assembled_contig_0	100.0		True
+CONTIG	DBG_assembled_contig_0	668	correct

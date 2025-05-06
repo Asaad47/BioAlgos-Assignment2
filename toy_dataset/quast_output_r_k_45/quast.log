@@ -1,0 +1,114 @@
+/home/mohaah0a/miniconda3/envs/cs249/bin/quast.py -r reference_r.fasta -o quast_output_r_k_45 reads_r_dbg_k_45.fasta
+
+Version: 5.2.0
+
+System information:
+  OS: Linux-5.14.0-427.20.1.el9_4.0.1.x86_64-x86_64-with-glibc2.34 (linux_64)
+  Python version: 3.10.16
+  CPUs number: 32
+
+Started: 2025-05-06 11:40:55
+
+Logging to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/quast.log
+NOTICE: Maximum number of threads is set to 8 (use --threads option to set it manually)
+
+CWD: /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset
+Main parameters: 
+  MODE: default, threads: 8, min contig length: 500, min alignment length: 65, min alignment IDY: 95.0, \
+  ambiguity: one, min local misassembly length: 200, min extensive misassembly length: 1000
+
+Reference:
+  /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/reference_r.fasta ==> reference_r
+
+Contigs:
+  Pre-processing...
+  reads_r_dbg_k_45.fasta ==> reads_r_dbg_k_45
+
+2025-05-06 11:40:55
+Running Basic statistics processor...
+  Reference genome:
+    reference_r.fasta, length = 1040, num fragments = 1, GC % = 51.25
+  Contig files: 
+    reads_r_dbg_k_45
+  Calculating N50 and L50...
+    reads_r_dbg_k_45, N50 = 1040, L50 = 1, auN = 1040.0, Total length = 1040, GC % = 51.25, # N's per 100 kbp =  0.00
+  Drawing Nx plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/basic_stats/Nx_plot.pdf
+  Drawing NGx plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/basic_stats/NGx_plot.pdf
+  Drawing cumulative plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/basic_stats/cumulative_plot.pdf
+  Drawing GC content plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/basic_stats/GC_content_plot.pdf
+  Drawing reads_r_dbg_k_45 GC content plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/basic_stats/reads_r_dbg_k_45_GC_content_plot.pdf
+Done.
+
+2025-05-06 11:40:56
+Running Contig analyzer...
+  reads_r_dbg_k_45
+  Logging to files /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/contigs_reports/contigs_report_reads_r_dbg_k_45.stdout and contigs_report_reads_r_dbg_k_45.stderr...
+  Aligning contigs to the reference
+  /home/mohaah0a/miniconda3/envs/cs249/lib/python3.10/site-packages/quast_libs/minimap2/minimap2 \
+  -c -x asm10 -B5 -O4,16 --no-long-join -r 200 -N 50 -s 65 -z 200 --mask-level 0.9 \
+  --min-occ 200 -g 2500 --score-N 2 --cs -t 8 quast_output_r_k_45/quast_corrected_input/reference_r.fasta \
+  quast_output_r_k_45/quast_corrected_input/reads_r_dbg_k_45.fasta > quast_output_r_k_45/contigs_reports/minimap_output/reads_r_dbg_k_45.coords_tmp \
+  2>> quast_output_r_k_45/contigs_reports/contigs_report_reads_r_dbg_k_45.stderr
+  Analysis is finished.
+
+  Creating total report...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/contigs_reports/misassemblies_report.txt, misassemblies_report.tsv, and misassemblies_report.tex
+  Transposed version of total report...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/contigs_reports/transposed_report_misassemblies.txt, transposed_report_misassemblies.tsv, and transposed_report_misassemblies.tex
+  Creating total report...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/contigs_reports/unaligned_report.txt, unaligned_report.tsv, and unaligned_report.tex
+  Drawing misassemblies by types plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/contigs_reports/misassemblies_plot.pdf
+  Drawing misassemblies FRCurve plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/contigs_reports/misassemblies_frcurve_plot.pdf
+Done.
+
+2025-05-06 11:40:56
+Running NA-NGA calculation...
+  reads_r_dbg_k_45, Largest alignment = 1040, NA50 = 1040, NGA50 = 1040, LA50 = 1, LGA50 = 1
+  Drawing cumulative plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/aligned_stats/cumulative_plot.pdf
+  Drawing NAx plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/aligned_stats/NAx_plot.pdf
+  Drawing NGAx plot...
+    saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/aligned_stats/NGAx_plot.pdf
+Done.
+
+2025-05-06 11:40:57
+Running Genome analyzer...
+  NOTICE: No file with genomic features were provided. Use the --features option if you want to specify it.
+
+  NOTICE: No file with operons were provided. Use the -O option if you want to specify it.
+  reads_r_dbg_k_45
+  Analysis is finished.
+  Skipping drawing Genome fraction, % histogram... (less than 2 columns histogram makes no sense)
+Done.
+
+NOTICE: Genes are not predicted by default. Use --gene-finding or --glimmer option to enable it.
+
+2025-05-06 11:40:57
+Creating large visual summaries...
+This may take a while: press Ctrl-C to skip this step..
+  1 of 2: Creating PDF with all tables and plots...
+  2 of 2: Creating Icarus viewers...
+Done
+
+2025-05-06 11:40:58
+RESULTS:
+  Text versions of total report are saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/report.txt, report.tsv, and report.tex
+  Text versions of transposed total report are saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/transposed_report.txt, transposed_report.tsv, and transposed_report.tex
+  HTML version (interactive tables and plots) is saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/report.html
+  PDF version (tables and plots) is saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/report.pdf
+  Icarus (contig browser) is saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/icarus.html
+  Log is saved to /ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/toy_dataset/quast_output_r_k_45/quast.log
+
+Finished: 2025-05-06 11:40:58
+Elapsed time: 0:00:03.065901
+NOTICEs: 4; WARNINGs: 0; non-fatal ERRORs: 0
+
+Thank you for using QUAST!
