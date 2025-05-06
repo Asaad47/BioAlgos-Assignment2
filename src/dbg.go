@@ -123,7 +123,7 @@ func DBGAssembler(fastq_filename string, kmer_length int) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+		if !strings.HasPrefix(line, "A") && !strings.HasPrefix(line, "T") && !strings.HasPrefix(line, "C") && !strings.HasPrefix(line, "G") {
 			continue
 		}
 
@@ -133,7 +133,7 @@ func DBGAssembler(fastq_filename string, kmer_length int) {
 
 	deBruijnGraph := constructDeBruijnGraph(reads, kmer_length)
 
-	exportToGFA(deBruijnGraph, fastq_filename[:len(fastq_filename)-6]+"_dbg_k_"+strconv.Itoa(kmer_length)+".gfa")
+	// exportToGFA(deBruijnGraph, fastq_filename[:len(fastq_filename)-6]+"_dbg_k_"+strconv.Itoa(kmer_length)+".gfa")
 
 	// reducedGraph := reduceGraph(deBruijnGraph)
 	// paths := walkReducedGraph(reducedGraph)
@@ -164,7 +164,7 @@ func DBGAssembler(fastq_filename string, kmer_length int) {
 	}
 }
 
-func main() {
+func DebugDBGAssembler() {
 	kmer_length := 40
 	fastq_filename := "../toy_dataset/reads_b.fastq"
 

@@ -395,7 +395,7 @@ func OLCAssembler(fastq_filename string, min_overlap int) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+		if !strings.HasPrefix(line, "A") && !strings.HasPrefix(line, "T") && !strings.HasPrefix(line, "C") && !strings.HasPrefix(line, "G") {
 			continue
 		}
 
@@ -431,18 +431,7 @@ func OLCAssembler(fastq_filename string, min_overlap int) {
 	}
 }
 
-func main() {
-	min_overlap := 100
-	if len(os.Args) == 3 {
-		var err error
-		min_overlap, err = strconv.Atoi(os.Args[2])
-		if err != nil {
-			fmt.Println("Usage: go run olc.go <fastq_filename> <min_overlap>")
-			os.Exit(1)
-		}
-	}
-
-	OLCAssembler(os.Args[1], min_overlap)
+func DebugOLCAssembler() {
 
 	// debugging
 	// reads := []string{"a_long_long",
@@ -461,58 +450,58 @@ func main() {
 	// 	"ong_time_ag",
 	// 	"ng_time_ago"}
 
-	// fastq_filename := "../toy_dataset/reads_r.fastq"
-	// fastqFile, err := os.Open(fastq_filename)
-	// if err != nil {
-	// 	log.Fatalf("Failed to open FASTQ file: %v", err)
-	// }
-	// defer fastqFile.Close()
+	fastq_filename := "../toy_dataset/reads_r.fastq"
+	fastqFile, err := os.Open(fastq_filename)
+	if err != nil {
+		log.Fatalf("Failed to open FASTQ file: %v", err)
+	}
+	defer fastqFile.Close()
 
-	// scanner := bufio.NewScanner(fastqFile)
+	scanner := bufio.NewScanner(fastqFile)
 
-	// reads := []string{}
+	reads := []string{}
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// 	if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
-	// 		continue
-	// 	}
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+			continue
+		}
 
-	// 	read := strings.ToLower(strings.TrimSpace(line))
-	// 	reads = append(reads, read)
-	// }
+		read := strings.ToLower(strings.TrimSpace(line))
+		reads = append(reads, read)
+	}
 
-	// min_overlap := 40
-	// overlap_graph := overlap(reads, min_overlap)
+	min_overlap := 40
+	overlap_graph := overlap(reads, min_overlap)
 
-	// // for read, edges := range overlap_graph {
-	// // 	fmt.Println(read)
-	// // 	for otherRead, overlapLen := range edges.outEdges {
-	// // 		fmt.Println("    ", otherRead, overlapLen)
-	// // 	}
-	// // }
-
-	// fmt.Println("------ after layout ------")
-	// fmt.Println(layout(overlap_graph))
-	// fmt.Println("------ overlap graph ------")
-	// read_to_index := make(map[string]int)
-	// i := 0
 	// for read, edges := range overlap_graph {
-	// 	fmt.Println("** READ:", read)
-	// 	read_to_index[read] = i
-	// 	i++
+	// 	fmt.Println(read)
 	// 	for otherRead, overlapLen := range edges.outEdges {
-	// 		fmt.Println("    OTHER READ:", otherRead)
-	// 		fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
+	// 		fmt.Println("    ", otherRead, overlapLen)
 	// 	}
 	// }
-	// fmt.Println("------ vertex to index mapping ------")
-	// for read, edges := range overlap_graph {
-	// 	fmt.Println("** READ:", read_to_index[read])
-	// 	for otherRead, overlapLen := range edges.outEdges {
-	// 		fmt.Println("    OTHER READ:", read_to_index[otherRead])
-	// 		fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
-	// 	}
-	// }
+
+	fmt.Println("------ after layout ------")
+	fmt.Println(layout(overlap_graph))
+	fmt.Println("------ overlap graph ------")
+	read_to_index := make(map[string]int)
+	i := 0
+	for read, edges := range overlap_graph {
+		fmt.Println("** READ:", read)
+		read_to_index[read] = i
+		i++
+		for otherRead, overlapLen := range edges.outEdges {
+			fmt.Println("    OTHER READ:", otherRead)
+			fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
+		}
+	}
+	fmt.Println("------ vertex to index mapping ------")
+	for read, edges := range overlap_graph {
+		fmt.Println("** READ:", read_to_index[read])
+		for otherRead, overlapLen := range edges.outEdges {
+			fmt.Println("    OTHER READ:", read_to_index[otherRead])
+			fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
+		}
+	}
 
 }
