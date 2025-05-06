@@ -1,0 +1,3 @@
+DBG_assembled_contig_0	8725	0	8725	+	NC_019843.3	30119	12270	20995	8725	8725	60	NM:i:0	ms:i:8725	AS:i:8725	nn:i:0	tp:A:P	cm:i:844	s1:i:8706	s2:i:0	de:f:0	rl:i:0	cg:Z:8725M	cs:Z::8725
+DBG_assembled_contig_1	8538	0	8538	+	NC_019843.3	30119	20961	29499	8538	8538	60	NM:i:0	ms:i:8538	AS:i:8538	nn:i:0	tp:A:P	cm:i:847	s1:i:8522	s2:i:0	de:f:0	rl:i:0	cg:Z:8538M	cs:Z::8538
+DBG_assembled_contig_2	12290	0	12290	+	NC_019843.3	30119	17	12307	12290	12290	60	NM:i:0	ms:i:12290	AS:i:12290	nn:i:0	tp:A:P	cm:i:1194	s1:i:12283	s2:i:0	de:f:0	rl:i:0	cg:Z:12290M	cs:Z::12290

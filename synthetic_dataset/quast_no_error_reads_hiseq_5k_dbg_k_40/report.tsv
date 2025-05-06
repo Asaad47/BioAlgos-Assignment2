@@ -1,0 +1,55 @@
+Assembly	no_error_reads_hiseq_5k_dbg_k_40
+# contigs (>= 0 bp)	3
+# contigs (>= 1000 bp)	3
+# contigs (>= 5000 bp)	3
+# contigs (>= 10000 bp)	1
+# contigs (>= 25000 bp)	0
+# contigs (>= 50000 bp)	0
+Total length (>= 0 bp)	29553
+Total length (>= 1000 bp)	29553
+Total length (>= 5000 bp)	29553
+Total length (>= 10000 bp)	12290
+Total length (>= 25000 bp)	0
+Total length (>= 50000 bp)	0
+# contigs	3
+Largest contig	12290
+Total length	29553
+Reference length	30119
+GC (%)	41.27
+Reference GC (%)	41.24
+N50	8725
+NG50	8725
+N90	8538
+NG90	8538
+auN	10153.5
+auNG	9962.7
+L50	2
+LG50	2
+L90	3
+LG90	3
+# misassemblies	0
+# misassembled contigs	0
+Misassembled contigs length	0
+# local misassemblies	0
+# scaffold gap ext. mis.	0
+# scaffold gap loc. mis.	0
+# unaligned mis. contigs	0
+# unaligned contigs	0 + 0 part
+Unaligned length	0
+Genome fraction (%)	97.885
+Duplication ratio	1.002
+# N's per 100 kbp	0.00
+# mismatches per 100 kbp	0.00
+# indels per 100 kbp	0.00
+Largest alignment	12290
+Total aligned length	29553
+NA50	8725
+NGA50	8725
+NA90	8538
+NGA90	8538
+auNA	10153.5
+auNGA	9962.7
+LA50	2
+LGA50	2
+LA90	3
+LGA90	3

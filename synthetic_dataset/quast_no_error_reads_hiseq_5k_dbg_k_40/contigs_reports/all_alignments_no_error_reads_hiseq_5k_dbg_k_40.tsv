@@ -1,0 +1,7 @@
+S1	E1	S2	E2	Reference	Contig	IDY	Ambiguous	Best_group
+12271	20995	1	8725	NC_019843.3	DBG_assembled_contig_0	100.0		True
+CONTIG	DBG_assembled_contig_0	8725	correct
+20962	29499	1	8538	NC_019843.3	DBG_assembled_contig_1	100.0		True
+CONTIG	DBG_assembled_contig_1	8538	correct
+18	12307	1	12290	NC_019843.3	DBG_assembled_contig_2	100.0		True
+CONTIG	DBG_assembled_contig_2	12290	correct
