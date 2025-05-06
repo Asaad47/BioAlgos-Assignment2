@@ -30,13 +30,13 @@ for the pdf report:
 ## Running the code
 
 ### Task 1.3.1:
-- `go run src/dbg.go toy_dataset/reads_b.fastq 40`
+- `go run . dbg toy_dataset/reads_b.fastq 40`
   - this will generate `reads_b_dbg_k_40.fasta` and `reads_b_dbg_k_40.gfa` files in the `toy_dataset` directory.
   - use Bandage to visualize the graph in `reads_b_dbg_k_40.gfa` file.
 
 ### Task 1.3.2:
-1. `go run src/dbg.go toy_dataset/reads_r.fastq 35`
-2. `go run src/dbg.go toy_dataset/reads_r.fastq 45`
+1. `go run . dbg toy_dataset/reads_r.fastq 35`
+2. `go run . dbg toy_dataset/reads_r.fastq 45`
   - this will generate `reads_r_dbg_k_35.fasta`, `reads_r_dbg_k_35.gfa`, `reads_r_dbg_k_45.fasta`, `reads_r_dbg_k_45.gfa` files in the `toy_dataset` directory.
   - use Bandage to visualize the graphs in `reads_r_dbg_k_35.gfa` and `reads_r_dbg_k_45.gfa` files.
 3. Then, inside the `toy_dataset` directory, run `quast.py -r reference_r.fasta -o quast_output_r_k_35 reads_r_dbg_k_35.fasta` and `quast.py -r reference_r.fasta -o quast_output_r_k_45 reads_r_dbg_k_45.fasta` to get the assembly metrics.
@@ -44,8 +44,8 @@ for the pdf report:
 ### Task 1.3.3:
 Similar to Task 1.3.2, run the following commands to get `.fasta` and `.gfa` files for `synthetic_dataset/reads/` directory.
 ```bash
-go run src/dbg.go synthetic_dataset/reads/no_error_reads_hiseq_5k.fastq 40
-go run src/dbg.go synthetic_dataset/reads/no_error_ont_hq_50x.fastq 40
+go run . dbg synthetic_dataset/reads/no_error_reads_hiseq_5k.fastq 40
+go run . dbg synthetic_dataset/reads/no_error_ont_hq_50x.fastq 40
 ```
 ```bash
 quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_reads_hiseq_5k_dbg_k_40 reads/no_error_reads_hiseq_5k_dbg_k_40.fasta
@@ -53,6 +53,12 @@ quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_ont_hq
 
 quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_reads_hiseq_5k_olc_40 reads/no_error_reads_hiseq_5k_olc_40.fasta
 quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_ont_hq_50x_olc_40 reads/no_error_ont_hq_50x_olc_40.fasta
+```
+
+```bash
+quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_ont_hq_50x_dbg_k_50 reads/ont_hq_50x_dbg_k_50.fasta
+
+quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_ont_hq_50x_olc_40 reads/ont_hq_50x_olc_40.fasta
 ```
 
 TODOs:
