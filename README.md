@@ -47,6 +47,13 @@ Similar to Task 1.3.2, run the following commands to get `.fasta` and `.gfa` fil
 go run src/dbg.go synthetic_dataset/reads/no_error_reads_hiseq_5k.fastq 40
 go run src/dbg.go synthetic_dataset/reads/no_error_ont_hq_50x.fastq 40
 ```
+```bash
+quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_reads_hiseq_5k_dbg_k_40 reads/no_error_reads_hiseq_5k_dbg_k_40.fasta
+quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_ont_hq_50x_dbg_k_40 reads/no_error_ont_hq_50x_dbg_k_40.fasta
+
+quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_reads_hiseq_5k_olc_40 reads/no_error_reads_hiseq_5k_olc_40.fasta
+quast.py -r GCF_000901155.1_ViralProj183710_genomic.fna -o quast_no_error_ont_hq_50x_olc_40 reads/no_error_ont_hq_50x_olc_40.fasta
+```
 
 TODOs:
 - fix code for error reads.
