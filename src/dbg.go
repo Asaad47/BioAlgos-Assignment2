@@ -86,34 +86,6 @@ func walkGraph(deBruijnGraph map[string]Node) []string {
 		}
 	}
 
-	// Also check for cycles (1-in-1-out everywhere)
-	for nodeID := range deBruijnGraph {
-		if visited[nodeID] {
-			continue
-		}
-		path := nodeID
-		current := nodeID
-
-		for {
-			visited[current] = true
-			next := deBruijnGraph[current]
-			if len(next.OutEdges) != 1 {
-				break
-			}
-			var nextNode string
-			for k := range next.OutEdges {
-				nextNode = k
-				break
-			}
-			if visited[nextNode] {
-				break
-			}
-			path += nextNode[len(nextNode)-1:]
-			current = nextNode
-		}
-		contigs = append(contigs, path)
-	}
-
 	return contigs
 }
 
