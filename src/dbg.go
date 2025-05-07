@@ -58,31 +58,41 @@ func walkGraph(deBruijnGraph map[string]Node) []string {
 	visited := make(map[string]bool)
 
 	for nodeID, node := range deBruijnGraph {
-		// start only from nodes that are not 1-in-1-out
-		if len(node.InEdges) != 1 || len(node.OutEdges) != 1 {
-			for nextNode := range node.OutEdges {
-				path := nodeID
-				current := nextNode
+		// start only from nodes that don't have an in-edge
+		if len(node.InEdges) == 0 && len(node.OutEdges) > 0 {
+			// pick the longest outgoing edge
+			max_length := 0
+			max_node := ""
+			for nextNode, length := range node.OutEdges {
+				if length > max_length {
+					max_length = length
+					max_node = nextNode
+				}
+			}
 
-				for {
-					if visited[current] {
-						break
-					}
-					visited[current] = true
-					path += current[len(current)-1:] // append last base of kmer
+			visited[nodeID] = true
+			current := max_node
+			path := current
 
-					next := deBruijnGraph[current]
-					if len(next.InEdges) != 1 || len(next.OutEdges) != 1 {
-						break
-					}
-					for k := range next.OutEdges {
-						current = k
-						break
+			for {
+				if visited[current] || current == "" {
+					break
+				}
+				visited[current] = true
+				path += current[len(current)-1:] // append last base of kmer
+
+				max_length := 0
+				next := ""
+				for k, length := range deBruijnGraph[current].OutEdges {
+					if length > max_length {
+						max_length = length
+						next = k
 					}
 				}
-
-				contigs = append(contigs, path)
+				current = next
 			}
+
+			contigs = append(contigs, path)
 		}
 	}
 
@@ -165,18 +175,36 @@ func DBGAssembler(fastq_filename string, kmer_length int) {
 }
 
 func DebugDBGAssembler() {
-	kmer_length := 40
-	fastq_filename := "../toy_dataset/reads_b.fastq"
+	kmer_length := 45
+	fastq_filename := "../synthetic_dataset/reads/reads_hiseq_5k.fastq"
 
-	if len(os.Args) == 3 {
-		var err error
-		kmer_length, err = strconv.Atoi(os.Args[2])
-		if err != nil {
-			fmt.Println("Usage: go run dbg.go <fastq_filename> <kmer_length>")
-			os.Exit(1)
+	// DBGAssembler(fastq_filename, kmer_length)
+
+	fastqFile, err := os.Open(fastq_filename)
+	if err != nil {
+		log.Fatalf("Failed to open FASTQ file: %v", err)
+	}
+	defer fastqFile.Close()
+
+	scanner := bufio.NewScanner(fastqFile)
+
+	reads := []string{}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "A") && !strings.HasPrefix(line, "T") && !strings.HasPrefix(line, "C") && !strings.HasPrefix(line, "G") {
+			continue
 		}
-		fastq_filename = os.Args[1]
+
+		read := strings.ToLower(strings.TrimSpace(line))
+		reads = append(reads, read)
 	}
 
-	DBGAssembler(fastq_filename, kmer_length)
+	deBruijnGraph := constructDeBruijnGraph(reads, kmer_length)
+
+	contigs := walkGraph(deBruijnGraph)
+
+	for i, contig := range contigs {
+		fmt.Println("contig ", i, ": ", contig)
+	}
 }
