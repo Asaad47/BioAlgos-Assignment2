@@ -16,6 +16,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	outputGFA := false
+	if len(os.Args) >= 5 && os.Args[4] == "gfa" {
+		outputGFA = true
+	}
+
 	assemblerType := strings.ToLower(os.Args[1])
 	fastq_filename := os.Args[2]
 
@@ -39,7 +44,7 @@ func main() {
 	case "olc":
 		OLCAssembler(fastq_filename, length_value)
 	case "dbg":
-		DBGAssembler(fastq_filename, length_value)
+		DBGAssembler(fastq_filename, length_value, outputGFA)
 	default:
 		fmt.Println("Unknown assembler type. Use 'olc' or 'dbg'")
 		os.Exit(1)

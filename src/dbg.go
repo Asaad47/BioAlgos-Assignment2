@@ -120,7 +120,7 @@ func exportToGFA(graph map[string]Node, filename string) {
 	}
 }
 
-func DBGAssembler(fastq_filename string, kmer_length int) {
+func DBGAssembler(fastq_filename string, kmer_length int, outputGFA bool) {
 	fastqFile, err := os.Open(fastq_filename)
 	if err != nil {
 		log.Fatalf("Failed to open FASTQ file: %v", err)
@@ -143,7 +143,9 @@ func DBGAssembler(fastq_filename string, kmer_length int) {
 
 	deBruijnGraph := constructDeBruijnGraph(reads, kmer_length)
 
-	// exportToGFA(deBruijnGraph, fastq_filename[:len(fastq_filename)-6]+"_dbg_k_"+strconv.Itoa(kmer_length)+".gfa")
+	if outputGFA {
+		exportToGFA(deBruijnGraph, fastq_filename[:len(fastq_filename)-6]+"_dbg_k_"+strconv.Itoa(kmer_length)+".gfa")
+	}
 
 	// reducedGraph := reduceGraph(deBruijnGraph)
 	// paths := walkReducedGraph(reducedGraph)

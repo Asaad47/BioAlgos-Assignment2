@@ -50,11 +50,11 @@ KAUST Spring 2025 \hfill Genome Assembly and Evaluation
 \hrulefill
 
 
-\section{Task 1.1}
+\section{Task 1.1 De Bruijn Graph (DBG) Assembly}
 
-\section{Task 1.2}
+\section{Task 1.2 Overlap-Layout-Consensus (OLC) Assembly}
 
-\section{Task 1.3}
+\section{Task 1.3 Applications of assembly algorithms}
 
 \subsection{Task 1.3.1}
 
@@ -105,50 +105,73 @@ QUAST evaluation for k=35 and k=45 against reference\_r.fasta:
 \subsection{Task 1.3.3}
 
 \subsubsection{ONT reads}
-DBG (no-errors) k = 40. OLC (no-errors) m = 40.
-DBG (errors) k = 40. OLC (errors) m = 40.
+For DBG, I used k = 40. For OLC, I used m = min\_overlap = 40.
+
 \begin{center}
 \begin{tabular}{ |c|c|c||c|c| }
     \hline
-    Metric               & DBG (no-errors) & \hl{OLC (no-errors)} & DBG (errors) & \hl{OLC (errors)} \\
+    Metric               & DBG (no-errors) & OLC (no-errors) & DBG (errors) & OLC (errors) \\
     \hline
-    sequence length      & 29748  & 1492567  & 76608 & 1505783 \\
-    number of contigs    & 1      & 165      & 11 & 163 \\
-    GC content (\%)      & 41.27  & 40.68    & 41.21 & 40.84 \\
-    genome fraction (\%) & 98.765 & 10000    & 98.738 & 98.655 \\
-    duplication ratio    & 1.000  & 50.174   & 1.973 & 37.597 \\
-    largest contig       & 29748  & 12465    & 17192 & 20439 \\
-    N50                  & 29748  & 9084     & 12088 & 9201 \\
-    N90                  & 29748  & 12059    & 1713 & 7834 \\
-    L50                  & 1      & 75       & 3 & 73 \\
-    misassemblies        & 0      & 0        & 0 & 0 \\
+    sequence length      & 29748  & 121258  & 76608 & 1505783 \\
+    number of contigs    & 1      & 4       & 11 & 163 \\
+    GC content (\%)      & 41.27  & 41.22    & 41.21 & 40.84 \\
+    genome fraction (\%) & 98.765 & 96.670    & 98.738 & 98.655 \\
+    duplication ratio    & 1.000  & 4.164    & 1.973 & 37.597 \\
+    largest contig       & 29748  & 80399    & 17192 & 20439 \\
+    N50                  & 29748  & 80399    & 12088 & 9201 \\
+    N90                  & 29748  & 10145    & 1713 & 7834 \\
+    L50                  & 1      & 1       & 3 & 73 \\
+    misassemblies        & 0      & 29        & 0 & 0 \\
     mismatches per 100 kbp & 0.00 & 0.00     & 78.39 & 493.40 \\
     indels per 100 kbp   & 3.36   & 0.00     & 184.04 & 1463.10  \\
     \hline
 \end{tabular}
 \end{center}
 
+
+OLC (errors) with m = 3 and m = 2:
+\begin{center}
+    \begin{tabular}{ |c|c|c| }
+        \hline
+        Metric               & m = 3 & m = 2 \\
+        \hline
+        sequence length      & 999925  & 537140   \\
+        number of contigs    & 57      & 13        \\
+        GC content (\%)      & 40.83  & 40.90    \\
+        genome fraction (\%) & 97.600 & 94.767    \\
+        duplication ratio    & 24.110  & 14.208    \\
+        largest contig       & 73843  & 62932    \\
+        N50                  & 19867  & 54062    \\
+        N90                  & 8207  & 25366    \\
+        L50                  & 13      & 5       \\
+        misassemblies        & 36      & 34        \\
+        mismatches per 100 kbp & 437.82 & 463.10     \\
+        indels per 100 kbp   & 1359.61   & 1411.50     \\
+        \hline
+    \end{tabular}
+    \end{center}
+
 \subsubsection{HiSeq reads}
-DBG (no-errors) k = 40. OLC (no-errors) m = 40.
-DBG (errors) k = 40. OLC (errors) m = ??.
+For DBG, I used k = 40. For OLC, I used m = min\_overlap = 40.
+
 
 \begin{center}
 \begin{tabular}{ |c|c|c||c|c| }
     \hline
-    Metric & DBG (no-errors) & OLC (no-errors) & DBG (errors) & \hl{OLC (errors)} \\
+    Metric & DBG (no-errors) & OLC (no-errors) & DBG (errors) & OLC (errors) \\
     \hline
-    sequence length        & 29553  & 29553  & 28835 & 10000 \\
-    number of contigs      & 3      & 3      & 11 & 10000 \\
-    GC content (\%)        & 41.26  & 41.27  & 41.20 & 10000 \\
-    genome fraction (\%)   & 97.882 & 97.885 & 94.425 & 10000 \\
-    duplication ratio      & 1.002  & 1.002  & 1.014 & 10000 \\
-    largest contig         & 12290  & 12290  & 5155 & 10000 \\
-    N50                    & 8725   & 8725   & 4682 & 10000 \\
-    N90                    & 8538   & 8538   & 1684 & 10000 \\
-    L50                    & 2      & 2      & 3 & 10000 \\
+    sequence length        & 29553  & 29553  & 28835 & 18535 \\
+    number of contigs      & 3      & 3      & 11 & 24 \\
+    GC content (\%)        & 41.26  & 41.27  & 41.20 & 40.71 \\
+    genome fraction (\%)   & 97.882 & 97.885 & 94.425 & 29.022 \\
+    duplication ratio      & 1.002  & 1.002  & 1.014 & 1.157 \\
+    largest contig         & 12290  & 12290  & 5155 & 2467 \\
+    N50                    & 8725   & 8725   & 4682 & 734 \\
+    N90                    & 8538   & 8538   & 1684 & 562 \\
+    L50                    & 2      & 2      & 3 & 10 \\
     misassemblies          & 0      & 0 & 0  & 0 \\
-    mismatches per 100 kbp & 0.00   & 0.00   & 38.16 & 0.00 \\
-    indels per 100 kbp     & 10.15  & 0.00   & 38.16 & 0.00 \\
+    mismatches per 100 kbp & 0.00   & 0.00   & 38.16 & 692.11 \\
+    indels per 100 kbp     & 10.15  & 0.00   & 38.16 & 266.96 \\
     \hline
 \end{tabular}
 \end{center}
@@ -177,4 +200,13 @@ SPAdes results:
     \hline
 \end{tabular}
 \end{center}
+
+\section{Task 2.1 Lizard Genome Assembly}
+
+\section{Task 2.2 Assembly Evaluation}
+
+
+
+
+
 \end{document}

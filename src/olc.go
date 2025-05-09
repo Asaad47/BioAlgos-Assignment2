@@ -9,252 +9,6 @@ import (
 	"strings"
 )
 
-// // Node represents a node in the suffix tree
-// type TreeNode struct {
-// 	children   map[rune]*TreeNode
-// 	start      int
-// 	end        *int // pointer to allow for leaf nodes to share end position
-// 	suffixLink *TreeNode
-// 	read       string // stores which read this suffix belongs to
-// }
-
-// // SuffixTree represents the suffix tree data structure
-// type SuffixTree struct {
-// 	root         *TreeNode
-// 	activeNode   *TreeNode
-// 	activeEdge   rune
-// 	activeLength int
-// 	remaining    int
-// 	end          int
-// }
-
-// // NewSuffixTree creates a new suffix tree
-// func NewSuffixTree() *SuffixTree {
-// 	root := &TreeNode{
-// 		children: make(map[rune]*TreeNode),
-// 		start:    -1,
-// 		end:      new(int),
-// 	}
-// 	*root.end = -1
-// 	return &SuffixTree{
-// 		root:         root,
-// 		activeNode:   root,
-// 		activeEdge:   0,
-// 		activeLength: 0,
-// 		remaining:    0,
-// 		end:          -1,
-// 	}
-// }
-
-// // Insert adds a string to the tree using Ukkonen's algorithm
-// func (st *SuffixTree) Insert(s string) {
-// 	s = s + "$"
-// 	st.end = -1
-// 	st.remaining = 0
-// 	st.activeNode = st.root
-// 	st.activeLength = 0
-
-// 	for i := 0; i < len(s); i++ {
-// 		st.end++
-// 		st.remaining++
-// 		var lastNewNode *TreeNode
-
-// 		for st.remaining > 0 {
-// 			if st.activeLength == 0 {
-// 				st.activeEdge = rune(s[i])
-// 			}
-
-// 			if child, exists := st.activeNode.children[st.activeEdge]; exists {
-// 				if st.walkDown(child) {
-// 					continue
-// 				}
-
-// 				if s[child.start+st.activeLength] == s[i] {
-// 					st.activeLength++
-// 					break
-// 				}
-
-// 				// Rule 2: Split edge
-// 				splitNode := &TreeNode{
-// 					children: make(map[rune]*TreeNode),
-// 					start:    child.start,
-// 					end:      new(int),
-// 					read:     s,
-// 				}
-// 				*splitNode.end = child.start + st.activeLength - 1
-
-// 				child.start = child.start + st.activeLength
-// 				splitNode.children[rune(s[child.start])] = child
-
-// 				st.activeNode.children[st.activeEdge] = splitNode
-
-// 				// Create new leaf
-// 				leaf := &TreeNode{
-// 					children: make(map[rune]*TreeNode),
-// 					start:    i,
-// 					end:      new(int),
-// 					read:     s,
-// 				}
-// 				*leaf.end = st.end
-// 				splitNode.children[rune(s[i])] = leaf
-
-// 				if lastNewNode != nil {
-// 					lastNewNode.suffixLink = splitNode
-// 				}
-// 				lastNewNode = splitNode
-// 			} else {
-// 				// Rule 1: Create new leaf
-// 				leaf := &TreeNode{
-// 					children: make(map[rune]*TreeNode),
-// 					start:    i,
-// 					end:      new(int),
-// 					read:     s,
-// 				}
-// 				*leaf.end = st.end
-// 				st.activeNode.children[st.activeEdge] = leaf
-
-// 				if lastNewNode != nil {
-// 					lastNewNode.suffixLink = st.activeNode
-// 				}
-// 				lastNewNode = nil
-// 			}
-
-// 			st.remaining--
-
-// 			if st.activeNode == st.root && st.activeLength > 0 {
-// 				st.activeLength--
-// 				st.activeEdge = rune(s[i-st.remaining+1])
-// 			} else if st.activeNode != st.root {
-// 				if st.activeNode.suffixLink == nil {
-// 					st.activeNode.suffixLink = st.root
-// 				}
-// 				st.activeNode = st.activeNode.suffixLink
-// 			}
-// 		}
-// 	}
-// }
-
-// // walkDown returns true if we need to continue walking down
-// func (st *SuffixTree) walkDown(node *TreeNode) bool {
-// 	if node == nil || node.end == nil {
-// 		return false
-// 	}
-// 	edgeLength := *node.end - node.start + 1
-// 	if st.activeLength >= edgeLength {
-// 		st.activeNode = node
-// 		st.activeLength -= edgeLength
-// 		st.activeEdge = rune(st.end - st.remaining + 1)
-// 		return true
-// 	}
-// 	return false
-// }
-
-// // FindOverlaps finds all overlaps between the given string and strings in the tree
-// func (st *SuffixTree) FindOverlaps(s string, minOverlap int) map[string]int {
-// 	overlaps := make(map[string]int)
-// 	originalS := s // Store original string without '$'
-// 	s = s + "$"    // Add '$' for tree traversal
-
-// 	current := st.root
-// 	length := 0
-// 	pos := 0
-
-// 	for pos < len(s) {
-// 		// fmt.Println("pos:", pos)
-// 		// fmt.Println("length:", length)
-// 		if length == 0 {
-// 			// Start from root
-// 			current = st.root
-// 		}
-
-// 		// Try to find the next character in the current node's children
-// 		if child, exists := current.children[rune(s[pos])]; exists {
-// 			// Calculate how much of this edge we can match
-// 			edgeLength := *child.end - child.start + 1
-// 			matchLength := 0
-
-// 			// Match as much as possible along this edge
-// 			for matchLength < edgeLength && pos+matchLength < len(s) {
-// 				if s[pos+matchLength] != s[child.start+matchLength] {
-// 					break
-// 				}
-// 				matchLength++
-// 			}
-
-// 			// Update position and length
-// 			pos += matchLength
-// 			length += matchLength
-
-// 			// If we've matched the entire edge, move to the child node
-// 			if matchLength == edgeLength && matchLength != 0 {
-// 				current = child
-// 			} else {
-// 				// Partial match, we can't go further
-// 				// TODO: is this correct?
-// 				break
-// 			}
-// 		} else {
-// 			// No match found
-// 			// TODO: is this correct?
-// 			break
-// 		}
-// 	}
-// 	// If we found a sufficient overlap
-// 	if length >= minOverlap {
-// 		// Collect all reads from the subtree
-// 		st.collectReads(current, overlaps, length, originalS)
-// 	}
-
-// 	return overlaps
-// }
-
-// // collectReads recursively collects all reads from a subtree
-// func (st *SuffixTree) collectReads(node *TreeNode, overlaps map[string]int, length int, originalS string) {
-// 	if node.read != "" {
-// 		// Remove '$' from the stored read
-// 		originalRead := node.read[:len(node.read)-1]
-// 		// Only add if it's a different read and the overlap is valid
-// 		if originalRead != originalS {
-// 			overlaps[originalRead] = length
-// 		}
-// 	}
-
-// 	for _, child := range node.children {
-// 		st.collectReads(child, overlaps, length, originalS)
-// 	}
-// }
-
-// func overlap(reads []string, min_overlap int) map[string]map[string]int {
-// 	overlap_graph := make(map[string]map[string]int)
-
-// 	// Initialize the overlap graph
-// 	for _, read := range reads {
-// 		overlap_graph[read] = make(map[string]int)
-// 	}
-
-// 	// Build the suffix tree
-// 	st := NewSuffixTree()
-// 	for _, read := range reads {
-// 		st.Insert(read)
-// 	}
-
-// 	fmt.Println("suffix tree:", st)
-// 	fmt.Println("root:", st.root)
-// 	for _, child := range st.root.children {
-// 		fmt.Println("child:", child)
-// 	}
-
-// 	// Find overlaps for each read
-// 	for _, read := range reads {
-// 		overlaps := st.FindOverlaps(read, min_overlap)
-// 		for otherRead, overlapLen := range overlaps {
-// 			overlap_graph[read][otherRead] = overlapLen
-// 		}
-// 	}
-
-// 	return overlap_graph
-// }
-
 type ContigNode struct {
 	read     string
 	outEdges map[string]int
@@ -301,7 +55,7 @@ func layout(overlap_graph map[string]ContigNode) []string {
 	for read, edges := range overlap_graph {
 		for otherRead, overlapLen := range edges.outEdges {
 			for furtherRead, otherOverlapLen := range overlap_graph[otherRead].outEdges {
-				if overlap_graph[read].outEdges[furtherRead] == overlapLen+otherOverlapLen-len(read) {
+				if overlap_graph[read].outEdges[furtherRead] == overlapLen+otherOverlapLen-len(otherRead) {
 					// remove the edge between read and furtherRead as it is inferrible
 					toBeRemoved = append(toBeRemoved, read+" "+furtherRead)
 				}
@@ -309,6 +63,30 @@ func layout(overlap_graph map[string]ContigNode) []string {
 		}
 	}
 
+	fmt.Println("Removing 1-hop inferrible edges: ", len(toBeRemoved))
+	for _, edge := range toBeRemoved {
+		parts := strings.Split(edge, " ")
+		read := parts[0]
+		otherRead := parts[1]
+		delete(overlap_graph[read].outEdges, otherRead)
+		delete(overlap_graph[otherRead].inEdges, read)
+	}
+
+	// identify nodes to be removed which are inferrible by 3 edges away
+	toBeRemoved = []string{}
+	for read1, edges1 := range overlap_graph {
+		for read2, edge2Length := range edges1.outEdges {
+			for read3, edge3Length := range overlap_graph[read2].outEdges {
+				for read4, edge4Length := range overlap_graph[read3].outEdges {
+					if overlap_graph[read1].outEdges[read4] == edge2Length+edge3Length+edge4Length-len(read2)-len(read3) {
+						toBeRemoved = append(toBeRemoved, read1+" "+read4)
+					}
+				}
+			}
+		}
+	}
+
+	fmt.Println("Removing 2-hop inferrible edges: ", len(toBeRemoved))
 	for _, edge := range toBeRemoved {
 		parts := strings.Split(edge, " ")
 		read := parts[0]
@@ -322,10 +100,12 @@ func layout(overlap_graph map[string]ContigNode) []string {
 		reads = append(reads, read)
 	}
 
+	numSingleOutEdges := 0
 	// combine single-edge reads
 	for _, read := range reads {
 		for {
 			if len(overlap_graph[read].outEdges) == 1 {
+				numSingleOutEdges++
 				otherRead := ""
 				for otherRead = range overlap_graph[read].outEdges {
 					break
@@ -364,6 +144,8 @@ func layout(overlap_graph map[string]ContigNode) []string {
 		}
 	}
 
+	fmt.Println("Number of single-edge reads: ", numSingleOutEdges)
+
 	contigs := []string{}
 	for read := range overlap_graph {
 		// if len(overlap_graph[read].outEdges) <= 1 && len(overlap_graph[read].inEdges) <= 1 {
@@ -375,11 +157,58 @@ func layout(overlap_graph map[string]ContigNode) []string {
 	return contigs
 }
 
-func consensus(read_layout []string) string {
-	out := ""
-	// take contigs and line them up, take consensus by majority vote
+func consensus(overlap_graph map[string]ContigNode) []string {
+	contigs := []string{}
+	visited := make(map[string]bool)
 
-	return out
+	numNoInEdges := 0
+	// walk over the overlap graph greedily
+	for read, readNode := range overlap_graph {
+		if len(readNode.inEdges) == 0 {
+			numNoInEdges++
+			if len(readNode.outEdges) == 0 {
+				contigs = append(contigs, read)
+			} else {
+				// start from this read and pick the longest outgoing edge
+				max_length := 0
+				max_node := ""
+				for nextNode, length := range readNode.outEdges {
+					if length > max_length {
+						max_length = length
+						max_node = nextNode
+					}
+				}
+
+				visited[read] = true
+				current := max_node
+				path := current
+
+				for {
+					if visited[current] || current == "" {
+						break
+					}
+					visited[current] = true
+					path += current[max_length+1:]
+
+					max_length := 0
+					next := ""
+					for k, length := range overlap_graph[current].outEdges {
+						if length > max_length {
+							max_length = length
+							next = k
+						}
+					}
+					current = next
+				}
+
+				contigs = append(contigs, path)
+			}
+		}
+	}
+
+	fmt.Println("Number of reads with no in-edges: ", numNoInEdges)
+
+	return contigs
 }
 
 func OLCAssembler(fastq_filename string, min_overlap int) {
@@ -404,8 +233,8 @@ func OLCAssembler(fastq_filename string, min_overlap int) {
 	}
 
 	overlap_graph := overlap(reads, min_overlap)
-	contigs := layout(overlap_graph)
-	// consensus := consensus(read_layout)
+	layout(overlap_graph)
+	contigs := consensus(overlap_graph)
 
 	// save the assembled contigs to a FASTA file
 	fastaFile, err := os.Create(fastq_filename[:len(fastq_filename)-6] + "_olc_" + strconv.Itoa(min_overlap) + ".fasta")
@@ -450,7 +279,9 @@ func DebugOLCAssembler() {
 	// 	"ong_time_ag",
 	// 	"ng_time_ago"}
 
-	fastq_filename := "../toy_dataset/reads_r.fastq"
+	// fastq_filename := "../synthetic_dataset/reads/no_error_ont_hq_50x.fastq"
+	// fastq_filename := "../synthetic_dataset/reads/no_error_reads_hiseq_5k.fastq"
+	fastq_filename := "../synthetic_dataset/reads/ont_hq_50x.fastq"
 	fastqFile, err := os.Open(fastq_filename)
 	if err != nil {
 		log.Fatalf("Failed to open FASTQ file: %v", err)
@@ -463,7 +294,7 @@ func DebugOLCAssembler() {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "+") || strings.HasPrefix(line, "I") {
+		if !strings.HasPrefix(line, "A") && !strings.HasPrefix(line, "T") && !strings.HasPrefix(line, "C") && !strings.HasPrefix(line, "G") {
 			continue
 		}
 
@@ -471,7 +302,9 @@ func DebugOLCAssembler() {
 		reads = append(reads, read)
 	}
 
-	min_overlap := 40
+	fmt.Println("------ reads ------", len(reads))
+
+	min_overlap := 3
 	overlap_graph := overlap(reads, min_overlap)
 
 	// for read, edges := range overlap_graph {
@@ -482,26 +315,40 @@ func DebugOLCAssembler() {
 	// }
 
 	fmt.Println("------ after layout ------")
-	fmt.Println(layout(overlap_graph))
+	layout(overlap_graph)
 	fmt.Println("------ overlap graph ------")
 	read_to_index := make(map[string]int)
 	i := 0
-	for read, edges := range overlap_graph {
-		fmt.Println("** READ:", read)
+	for read := range overlap_graph {
+		// fmt.Println("** READ:", read)
 		read_to_index[read] = i
 		i++
-		for otherRead, overlapLen := range edges.outEdges {
-			fmt.Println("    OTHER READ:", otherRead)
-			fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
-		}
+		// for otherRead, overlapLen := range edges.outEdges {
+		// 	fmt.Println("    OTHER READ:", otherRead)
+		// 	fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
+		// }
 	}
 	fmt.Println("------ vertex to index mapping ------")
-	for read, edges := range overlap_graph {
-		fmt.Println("** READ:", read_to_index[read])
-		for otherRead, overlapLen := range edges.outEdges {
-			fmt.Println("    OTHER READ:", read_to_index[otherRead])
-			fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
-		}
-	}
+	fmt.Println("i:", i)
+	contigs := consensus(overlap_graph)
+	fmt.Println("------ contigs ------", len(contigs))
+	// for _, contig := range contigs {
+	// 	fmt.Println(contig)
+	// }
+	// for read, edges := range overlap_graph {
+	// 	fmt.Println("** READ:", read_to_index[read])
+	// 	for otherRead, overlapLen := range edges.outEdges {
+	// 		fmt.Println("    OTHER READ:", read_to_index[otherRead])
+	// 		fmt.Println("    -- OVERLAP LENGTH:", overlapLen)
+	// 	}
+	// }
 
+	// readSizeCount := make(map[int]int)
+	// for read := range overlap_graph {
+	// 	readSizeCount[len(read)]++
+	// }
+
+	// for size, count := range readSizeCount {
+	// 	fmt.Println("** READ SIZE:", size, "** COUNT:", count)
+	// }
 }
