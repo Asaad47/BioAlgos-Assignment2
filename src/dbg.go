@@ -72,7 +72,7 @@ func walkGraph(deBruijnGraph map[string]Node) []string {
 
 			visited[nodeID] = true
 			current := max_node
-			path := current
+			path := nodeID
 
 			for {
 				if visited[current] || current == "" {
