@@ -346,11 +346,12 @@ hifiasm -o assembly/scinmit_hicul \
 awk '$1=="S"{print ">"$2"\n"$3}' assembly/scinmit_hicul.hic.p_ctg.gfa > assembly/scinmit_hicul.hic.p_ctg.fa
 \end{lstlisting}
 
-\texttt{hifiasm} took the \_seq and \_rev liver files as input reads, in addition to the Hi-C and ultra-long ONT reads. 
+\texttt{hifiasm} \cite{hifiasm} took the \_seq and \_rev liver files as input reads, in addition to the Hi-C and ultra-long ONT reads. 
 
 \section{Task 2.2 Assembly Evaluation}
 
-For the evaluation tools, I used QUAST, BUSCO, Merqury, and Inspector. Commands used to run the tools are described in the code repository \url{https://github.com/Asaad47/BioAlgos-Assignment2#task-22-evaluation-scripts}.
+For the evaluation tools, I used QUAST \cite{quast}, BUSCO \cite{busco}, Merqury \cite{merqury}, and Inspector \cite{inspector}. 
+Commands used to run the tools are described in the code repository \url{https://github.com/Asaad47/BioAlgos-Assignment2#task-22-evaluation-scripts}.
 
 \subsection{QUAST evaluation}
 
@@ -530,11 +531,106 @@ Tables \ref{tab:inspector_scinmit_hicul_alignment}, \ref{tab:inspector_scinmit_h
     \end{center}
     \end{table}
 
+\subsection{Analysis}
+
+The assembly of the Scincus mitranus lizard genome shows promising results across multiple evaluation metrics:
+
+\subsubsection{Assembly Structure and Completeness}
+\begin{itemize}
+    \item The assembly produced 94 contigs with a total length of 1.81 Gbp, which is reasonable for a reptile genome (compared to 3.2 Gbp for the human genome and similar to sauropsida's genome).
+    \item The N50 of 138.3 Mbp and N90 of 40.6 Mbp indicate good contiguity, with the largest contig being 341.8 Mbp.
+    \item The GC content of 45.48\% is within the expected range for vertebrate genomes.
+\end{itemize}
+
+\subsubsection{Gene Content and Completeness}
+\begin{itemize}
+    \item BUSCO analysis against the sauropsida lineage shows excellent completeness:
+    \begin{itemize}
+        \item 98.2\% complete BUSCOs (7349 genes)
+        \item 97.4\% single-copy genes (7285)
+        \item Only 1.5\% missing genes (114)
+    \end{itemize}
+    \item The high single-copy percentage (97.4\%) suggests good haplotype resolution.
+    \item The presence of 64 multi-copy genes (0.9\%) might indicate some duplication or assembly artifacts.
+\end{itemize}
+
+\subsubsection{Assembly Quality}
+\begin{itemize}
+    \item Merqury analysis shows:
+    \begin{itemize}
+        \item High QV of 65.62, indicating good base-level accuracy
+        \item Low estimated error rate of 2.74e-07
+        \item The k-mer spectrum shows a clear peak at ~380 coverage, which supports the diploid nature of the genome since the input contig is only the primary contig.
+    \end{itemize}
+    \item Inspector analysis reveals:
+    \begin{itemize}
+        \item Excellent mapping rate (99.88\%) and depth (68.55x)
+        \item 126 structural errors, with expansions (60) being more common than collapses (42)
+        \item Small-scale errors are present but at a reasonable rate (5086 per Mbp)
+        \item The QV of 22.90 from Inspector is lower than Merqury's estimate, suggesting some disagreement between the tools
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Overall Assessment}
+The assembly appears to be of high quality, with:
+\begin{itemize}
+    \item Excellent gene completeness (98.2\% BUSCO)
+    \item Good contiguity (N50 $>$ 138 Mbp)
+    \item High base-level accuracy (QV $>$ 65)
+    \item Good haplotype resolution (97.4\% single-copy genes)
+\end{itemize}
+
+Areas for potential improvement include:
+\begin{itemize}
+    \item Reducing the number of structural errors (126 reported by Inspector)
+    \item Resolving the discrepancy between Merqury and Inspector QV estimates
+    \item Further investigation of the 64 multi-copy genes
+\end{itemize}
+
+Overall, this assembly provides a solid foundation for downstream analyses of the Scincus mitranus genome.
+
+\section{Assembled Genome Links}
+
+The assembled genome is available at this directory:
+
+\texttt{/ibex/user/mohaah0a/cs249/BioAlgos-Assignment2/asm\_scinmit/assembly}
+
+With important files:
+
+\begin{itemize}
+    \item \texttt{scinmit\_hicul.hic.p\_ctg.fa} - the primary contig assembly.
+    \item \texttt{scinmit\_hicul.hic.a\_ctg.fa}
+    \item \texttt{scinmit\_hicul.hic.hap1.p\_ctg.fa}
+    \item \texttt{scinmit\_hicul.hic.hap2.p\_ctg.fa}
+\end{itemize}
 
 \begin{thebibliography}{9}
 \bibitem{olc_lecture_notes}
 Langmead, B. (2024). Overlap-Layout-Consensus Assembly. Johns Hopkins University. 
 \url{https://www.cs.jhu.edu/~langmea/resources/lecture_notes/assembly_olc.pdf}
+
+\bibitem{hifiasm}
+Cheng, H., Concepcion, G.T., Feng, X., Zhang, H., Li H. (2021) Haplotype-resolved de novo assembly using phased assembly graphs with hifiasm. 
+Nat Methods, 18:170-175. \url{https://doi.org/10.1038/s41592-020-01056-5}
+
+\bibitem{quast}
+Alla Mikheenko, Vladislav Saveliev, Pascal Hirsch, Alexey Gurevich,
+WebQUAST: online evaluation of genome assemblies,
+Nucleic Acids Research (2023) 51 (W1): W601-W606. \url{https://doi.org/10.1093/nar/gkad406}
+
+\bibitem{busco}
+Mosè Manni, Matthew R Berkeley, Mathieu Seppey, Felipe A Simão, Evgeny M Zdobnov, 
+BUSCO Update: Novel and Streamlined Workflows along with Broader and Deeper Phylogenetic Coverage for Scoring of Eukaryotic, Prokaryotic, and Viral Genomes. 
+Molecular Biology and Evolution, Volume 38, Issue 10, October 2021, Pages 4647-4654. \url{https://doi.org/10.1093/molbev/msab181}
+
+\bibitem{merqury}
+Rhie, A., Walenz, B.P., Koren, S. et al. Merqury: reference-free quality, completeness, and phasing assessment for genome assemblies.
+ Genome Biol 21, 245 (2020). \url{https://doi.org/10.1186/s13059-020-02134-9}
+
+\bibitem{inspector}
+Chen, Y., Zhang, Y., Wang, A.Y. et al. Accurate long-read de novo assembly evaluation with Inspector.
+Genome Biol 22, 312 (2021). \url{https://doi.org/10.1186/s13059-021-02527-4}
+
 \end{thebibliography}
 
 \end{document}
