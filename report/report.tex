@@ -57,6 +57,17 @@ KAUST Spring 2025 \hfill Genome Assembly and Evaluation
 
 \hrulefill
 
+\section{Introduction}
+
+In this assignment, I had the opportunity to work with assembling and evaluating genome assemblies. 
+
+In the first part of the assignment, I implemented the De Bruijn Graph (DBG) and Overlap-Layout-Consensus (OLC) algorithms.
+The assignment sheet provided a toy dataset to test the algorithms and a larger more realistic dataset of Middle East respiratory
+syndrome-related coronavirus (MERS-CoV) genome. I evaluated the performance of these algorithms on the datasets and compared them against each other and against a more established tool, SPAdes.
+
+In the second part of the assignment, I worked with a lizard genome and evaluated the performance of the assembly using the tools described in the assignment sheet. 
+
+The implementation of the algorithms and the evaluation of the performance are described in the following sections. The code is available at \url{https://github.com/Asaad47/BioAlgos-Assignment2}.
 
 \section{Task 1.1 De Bruijn Graph (DBG) Assembly}
 
@@ -164,7 +175,12 @@ The missed nucleotides are likely due to the bubble in the middle of the DBG for
 \subsection{Task 1.3.3}
 
 \subsubsection{ONT reads}
-For DBG, I used k = 40. For OLC, I used m = min\_overlap = 40.
+For DBG, I used $k = 40$. For OLC, I used $m = \text{min\_overlap} = 40$. These values had better assemblies than other values I tried (e.g. $k = 35,45$, etc. and $m = 30,50$, etc.).
+
+Table \ref{tab:quast_mers} shows the QUAST evaluation for DBG and OLC on MERS virus data. The DBG has a better assembly than the OLC, which can be seen in the genome fraction and duplication ratio. The OLC has a higher duplication ratio and a lower genome fraction, which suggests that the implemented OLC algorithm is not as good at reconstructing the original genome.
+Between the error-free and errored reads, both algorithms achieve obvious better performance in the error-free case bu having lower number of contigs and lower number of duplication ratios while having a high genome fraction. The OLC implementation is quite bad at reconstructing the original genome in both cases. In the errored reads case, OLC only reduced the number of contigs by 3. 
+This is heavily influenced by the fact that the OLC \texttt{consensus} function is not optimized to solve the problem of reconstructing the original genome when having errors and small number of reads. I tried to implement a better \texttt{consensus} function, but it did not improve the performance of the OLC algorithm.
+
 
 \begin{table}[h!]
 \begin{center}
@@ -187,11 +203,15 @@ For DBG, I used k = 40. For OLC, I used m = min\_overlap = 40.
     \hline
 \end{tabular}
 \end{center}
-\caption{QUAST evaluation for DBG and OLC on MERS virus data}
+\caption{QUAST evaluation for DBG and OLC on MERS virus data with ONT reads}
 \label{tab:quast_mers}
 \end{table}
 
-OLC (errors) with m = 3 and m = 2:
+In finding an optimal $m$ value for OLC, I tried different values of $m$ and found that $m = 3$ and $m = 2$ gave interesting results. Table \ref{tab:quast_mers_olc_m3_m2} shows the QUAST evaluation for OLC with $m = 3$ and $m = 2$ on MERS virus data.
+
+They heavily reduce the number of contigs found while having high genome fractions. However, they both have high duplication ratios and high indels per 100 kbp, which suggests that they are not as good at reconstructing the original genome as DBG implementation.
+
+Further work could be done to improve the OLC algorithm to reconstruct the original genome when having errors and small number of reads.
 
 \begin{table}[h!]
 \begin{center}
@@ -214,13 +234,17 @@ OLC (errors) with m = 3 and m = 2:
         \hline
     \end{tabular}
     \end{center}
-\caption{QUAST evaluation for OLC with m = 3 and m = 2 on MERS virus data}
+\caption{QUAST evaluation for OLC with $m = 3$ and $m = 2$ on MERS virus data}
 \label{tab:quast_mers_olc_m3_m2}
 \end{table}
 
 \subsubsection{HiSeq reads}
-For DBG, I used k = 40. For OLC, I used m = min\_overlap = 40.
+Similar to the ONT reads, I used $k = 40$ for DBG and $m = \text{min\_overlap} = 40$ for OLC. Also, these values had better assemblies than other values I tried (e.g. $k = 35,45$, etc. and $m = 30,50$, etc.).
 
+Table \ref{tab:quast_mers_dbg_olc} shows the QUAST evaluation for DBG and OLC on MERS virus data. In this case, both DBG and OLC have similar performance on the no-error case. However, OLC implementation fails horribly in the errored reads case.
+This is also heavily due to the fact that the OLC \texttt{consensus} function is not optimized to solve the problem of reconstructing the original genome when having errors. I tried to implement a better \texttt{consensus} function, but it did not improve the performance of the OLC algorithm.
+
+On the other hand, DBG implementation is able to reconstruct the original genome in the errored case relatively well with 94.425\% genome fraction and 1.014 duplication ratio. Also, relatively low number of contigs and indels per 100 kbp.
 
 \begin{table}[h!]
 \begin{center}
@@ -243,13 +267,18 @@ For DBG, I used k = 40. For OLC, I used m = min\_overlap = 40.
     \hline
 \end{tabular}
 \end{center}
-\caption{QUAST evaluation for DBG and OLC on MERS virus data}
+\caption{QUAST evaluation for DBG and OLC on MERS virus data with HiSeq reads}
 \label{tab:quast_mers_dbg_olc}
 \end{table}
 
 \subsection{Task 1.3.4}
 
-SPAdes results:
+Table \ref{tab:quast_mers_spades} shows the QUAST evaluation for SPAdes on MERS virus data. SPAdes is able to reconstruct the original genomes with high genome fractions and using only one contig assembly.
+
+In the case of ONT reads, SPAdes and DBG have similar performance with similar genome fractions in the error-free and errored cases, but SPAdes has consistently lower duplication ratios and indels per 100 kbp, which can be understood as SPAdes only using one contig assembly.
+
+In the case of HiSeq reads, SPAdes, DBG, and OLC have similar performance with similar genome fractions and GC content in the error-free case. However, in the errored case, SPAdes achieves better performance than DBG and OLC across all metrics.
+This is expected as SPAdes has been developed and designed more rigorously while my implementations are simple and naive.
 
 \begin{table}[h!]
 \begin{center}
@@ -282,7 +311,8 @@ SPAdes results:
 
 \begin{thebibliography}{9}
 \bibitem{olc_lecture_notes}
-Langmead, B. (2024). Overlap-Layout-Consensus Assembly. Johns Hopkins University.
+Langmead, B. (2024). Overlap-Layout-Consensus Assembly. Johns Hopkins University. 
+\url{https://www.cs.jhu.edu/~langmea/resources/lecture_notes/assembly_olc.pdf}
 \end{thebibliography}
 
 \end{document}
