@@ -13,7 +13,7 @@
       - [QUAST](#quast)
       - [BUSCO](#busco)
       - [Merqury](#merqury)
-      - [Flagger or Inspector](#flagger-or-inspector)
+      - [Inspector](#inspector)
   - [Old scratch scripts](#old-scratch-scripts)
     - [Task 2.1](#task-21)
     - [Task 2.2](#task-22)
@@ -49,6 +49,24 @@ for the pdf report:
 
 
 ## Running the code
+
+`src/` directory contains the source code for DBG and OLC implementations written in Go. These files are only needed for Task 1 to run the DBG and OLC algorithms.
+```bash
+$ tree src
+src
+├── dbg.go
+├── main.go
+└── olc.go
+
+1 directory, 3 files
+```
+
+To run the code, use the following commands:
+```bash
+go run . dbg <reads_file> <k> [gfa]
+go run . olc <reads_file> <min_overlap>
+```
+`gfa` is optional and if provided, the program will generate a GFA file for the assembly graph. The output files will be saved in the same path as the input file with `_dbg_k_<k>.fasta` and `_dbg_k_<k>.gfa` extensions or `_olc_<min_overlap>.fasta` extension.
 
 ### Task 1.3.1 DBG Assembly Graph on reads_b
 - `go run . dbg toy_dataset/reads_b.fastq 40 gfa`
@@ -192,9 +210,19 @@ meryl count k=21 threads=64 output eval/meryl/hifi_k21.meryl \
 merqury.sh eval/meryl/hifi_k21.meryl assembly/scinmit_hicul.hic.p_ctg.fa eval/merqury
 ```
 
-#### Flagger or Inspector
+#### Inspector
 ```bash
-# 4- Flagger or Inspector
+# first install inspector
+conda install -c bioconda inspector
+git clone https://github.com/ChongLab/Inspector.git
+export PATH=$PWD/Inspector/:$PATH
+
+# run inspector (took around a day to finish)
+inspector.py -c assembly/scinmit_hicul.hic.p_ctg.fa \
+         -r data/pacbio/lizard_liver.fastq.gz data/ont/lizard_ont.fastq.gz \
+         -o eval/inspector \
+         -t 64 \
+         --datatype mixed
 ```
 
 

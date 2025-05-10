@@ -52,7 +52,46 @@ KAUST Spring 2025 \hfill Genome Assembly and Evaluation
 
 \section{Task 1.1 De Bruijn Graph (DBG) Assembly}
 
+Requirements of this algorithm are:
+\begin{itemize}
+    \item Takes FASTQ files as input
+    \item Constructs a de Bruijn graph from k-mers (with user-defined k)
+    \item Identifies contigs by finding Eulerian paths
+    \item Outputs contigs as a FASTA file
+\end{itemize}
+
+The implementation of the algorithm can be found in \texttt{src/dbg.go} file. The main function to handle the algorithm's components is \texttt{DBGAssembler}.
+Then, there are two helper functions: \texttt{constructDeBruijnGraph} and \texttt{walkGraph}.
+
+\texttt{constructDeBruijnGraph} constructs the de Bruijn graph from the reads. It first creates a map of k-mers to their nodes. Then, it adds the edges to the graph. The graph is represented as a map of k-mers to their nodes, where each node is a struct with the k-mer string, its outgoing edges (a map of other k-mers to the number of times they appear in the reads), and its incoming edges (a map of other k-mers to the number of times they appear in the reads).
+
+\texttt{walkGraph} looks at nodes with no incoming edges and picks the longest outgoing edge, which would be a greedy approach on the most occurence of the k-mer. It then follows the edge to the next node and repeats the process until it reaches a node with no outgoing edges. It then adds the collected contig from this path to the list of contigs. It repeats this process for all nodes with no incoming edges, so essentially the output has the same number of contigs as the number of nodes with no incoming edges.
+
+\texttt{DBGAssembler} then writes the contigs to a FASTA file.
+
 \section{Task 1.2 Overlap-Layout-Consensus (OLC) Assembly}
+
+Requirements of this algorithm are:
+\begin{itemize}
+    \item Takes FASTQ files as input
+    \item Computes all-vs-all read overlaps and constructs an overlap graph,
+    using the minimum overlap length n as a parameter
+    \item Identifies non-branching paths in the graph
+    \item Generates a layout of reads
+    \item Computes a consensus sequence for each contig
+    \item Outputs contigs as a FASTA file
+\end{itemize}
+
+The implementation of the algorithm can be found in \texttt{src/olc.go} file. The main function to handle the algorithm's components is \texttt{OLCAssembler}. Then, there are three helper functions: \texttt{overlap}, \texttt{layout}, and \texttt{consensus}.
+
+\texttt{overlap} computes all-vs-all read overlaps and constructs an overlap graph, using the minimum overlap length \texttt{min\_overlap} as a parameter. It returns a map of reads to their nodes, where each node is a struct with the read string, its outgoing edges (a map of other reads to the largest overlap size), and its incoming edges (a map of other reads to the largest overlap size).
+The implementation is a naive approach that iterates over all pairs of reads and checks for overlaps, which worked sufficiently for the assignment's datasets.
+
+\texttt{layout} reduces the size of the overlap graph by removing 1-hop and 2-hop inferrible edges as described in the lecture notes of Johns Hopkins slides \cite{olc_lecture_notes}. During the process, it updates the overlap graph by combining reads that have single in-edges and single out-edges. It then outputs the list of reads of the updated overlap graph as contigs.
+
+\texttt{consensus} is a greedy algorithm that starts from a read with no incoming edges and follows the longest outgoing edge until it reaches a read with no outgoing edges. It then adds the collected contig from this path to the list of contigs. It repeats this process for all reads with no incoming edges, so essentially the output has the same number of contigs as the number of reads with no incoming edges. This is not an optimal solution, but it happened to be a good approximation for the assignment's datasets.
+
+
 
 \section{Task 1.3 Applications of assembly algorithms}
 
@@ -85,18 +124,18 @@ QUAST evaluation for k=35 and k=45 against reference\_r.fasta:
     \hline
     Metric & k=35 & k=45 \\
     \hline
-    sequence length & 914 & 1040 \\
-    number of contigs & 4 & 1 \\
-    GC content (\%) & 51.64 & 51.25 \\
-    genome fraction (\%) & 87.885 & 100.000 \\
-    duplication ratio & 1.000 & 1.000 \\
-    largest contig & 914 & 1040 \\
-    N50 & 914 & 1040 \\
-    N90 & 914 & 1040 \\
+    sequence length & 1020 & 1040 \\
+    number of contigs & 1 & 1 \\
+    GC content (\%) & 51.47 & 51.35 \\
+    genome fraction (\%) & 99.904 & 99.904 \\
+    duplication ratio & 0.982 & 1.001 \\
+    largest contig & 1020 & 1040 \\
+    N50 & 1020 & 1040 \\
+    N90 & 1020 & 1040 \\
     L50 & 1 & 1 \\
     misassemblies & 0 & 0 \\
     mismatches per 100 kbp & 0.00 & 0.00 \\
-    indels per 100 kbp & 0.00 & 0.00 \\
+    indels per 100 kbp & 196.08 & 96.15 \\
     \hline
 \end{tabular}
 \end{center}
@@ -205,8 +244,9 @@ SPAdes results:
 
 \section{Task 2.2 Assembly Evaluation}
 
-
-
-
+\begin{thebibliography}{9}
+\bibitem{olc_lecture_notes}
+Langmead, B. (2024). Overlap-Layout-Consensus Assembly. Johns Hopkins University.
+\end{thebibliography}
 
 \end{document}
