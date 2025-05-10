@@ -38,7 +38,7 @@
     % numbers=left,                    
     numbersep=5pt,                  
     % showspaces=false,                
-    % showstringspaces=false,
+    showstringspaces=false,
     % showtabs=false,                  
     % tabsize=2
 }
@@ -65,7 +65,7 @@ In the first part of the assignment, I implemented the De Bruijn Graph (DBG) and
 The assignment sheet provided a toy dataset to test the algorithms and a larger more realistic dataset of Middle East respiratory
 syndrome-related coronavirus (MERS-CoV) genome. I evaluated the performance of these algorithms on the datasets and compared them against each other and against a more established tool, SPAdes.
 
-In the second part of the assignment, I worked with a lizard genome and evaluated the performance of the assembly using the tools described in the assignment sheet. 
+In the second part of the assignment, I worked with a Scincus mitranus lizard genome and evaluated the performance of the assembly using the tools described in the assignment sheet. 
 
 The implementation of the algorithms and the evaluation of the performance are described in the following sections. The code is available at \url{https://github.com/Asaad47/BioAlgos-Assignment2}.
 
@@ -307,7 +307,229 @@ This is expected as SPAdes has been developed and designed more rigorously while
 
 \section{Task 2.1 Lizard Genome Assembly}
 
+The commands used to assemble the lizard genome are described in the following bash commands. The assembly took around 9 hours and 16 minutes.
+
+I used the allocated resources for the class in Ibex cluster. The resources used were (part of the head of my slurm script):
+
+\begin{lstlisting}[language=bash]
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=256G
+#SBATCH --account=cs249
+\end{lstlisting}
+
+The assembly was done using the following commands:
+
+\begin{lstlisting}[language=bash]
+# 1- Setup
+module load gcc/12.2.0 hifiasm/0.19 minimap2 samtools seqtk
+mkdir -p asm_scinmit/{assembly,data,eval,tmp}
+cd asm_scinmit
+
+# 2- Fetch data
+export RAW=/ibex/reference/course/cs249/lizard/input
+# Create symbolic links inside project tree
+ln -s $RAW/pacbio/*.fastq.gz data/pacbio/
+ln -s $RAW/hic/*.fastq.gz data/hic/
+ln -s $RAW/ont/*.fastq.gz data/ont/
+
+# 3- Assemble primary contigs (took around 9 hours and 16 minutes)
+# Real time: 33467.576 sec; CPU: 1523075.897 sec; Peak RSS: 170.915 GB
+hifiasm -o assembly/scinmit_hicul \
+        -t64 --primary -D10 \
+        --h1 data/hic/lizard_hic_R1.fastq.gz \
+        --h2 data/hic/lizard_hic_R2.fastq.gz \
+        --ul data/ont/lizard_ont.fastq.gz \
+        data/pacbio/lizard_liver_seq.fastq.gz \
+        data/pacbio/lizard_liver_rev.fastq.gz
+
+# 4- Convert GFA to FASTA
+awk '$1=="S"{print ">"$2"\n"$3}' assembly/scinmit_hicul.hic.p_ctg.gfa > assembly/scinmit_hicul.hic.p_ctg.fa
+\end{lstlisting}
+
+\texttt{hifiasm} took the \_seq and \_rev liver files as input reads, in addition to the Hi-C and ultra-long ONT reads. 
+
 \section{Task 2.2 Assembly Evaluation}
+
+For the evaluation tools, I used QUAST, BUSCO, Merqury, and Inspector. Commands used to run the tools are described in the code repository \url{https://github.com/Asaad47/BioAlgos-Assignment2#task-22-evaluation-scripts}.
+
+\subsection{QUAST evaluation}
+
+Found in \texttt{eval/quast/report.pdf}. 
+
+Table \ref{tab:quast_scinmit_hicul} shows the QUAST evaluation for scinmit\_hicul.hic.p\_ctg.fa.
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & scinmit\_hicul.hic.p\_ctg.fa \\
+        \hline
+        sequence length & 1807572148 \\
+        number of contigs & 94 \\
+        GC content (\%) & 45.48 \\
+        largest contig & 341760416 \\
+        N50 & 138345715 \\
+        N90 & 40553331 \\
+        L50 & 4 \\
+        \hline
+    \end{tabular}
+    \caption{\textbf{QUAST} evaluation for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:quast_scinmit_hicul}
+    \end{center}
+    \end{table}
+
+\subsection{BUSCO evaluation}
+
+Found in \texttt{eval/busco/short\_summary.specific.sauropsida\_odb10.busco.json}. Reported against \texttt{sauropsida\_odb10} lineage.
+
+Table \ref{tab:busco_scinmit_hicul} shows the BUSCO evaluation for scinmit\_hicul.hic.p\_ctg.fa.
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & Value \\
+        \hline
+        Complete percentage & 98.2 \\
+        Complete BUSCOs & 7349 \\
+        Single copy percentage & 97.4 \\
+        Single copy BUSCOs & 7285 \\
+        Multi copy percentage & 0.9 \\
+        Multi copy BUSCOs & 64 \\
+        Fragmented percentage & 0.2 \\
+        Fragmented BUSCOs & 17 \\
+        Missing percentage & 1.5 \\
+        Missing BUSCOs & 114 \\
+        n\_markers & 7480 \\
+        avg\_identity & 0.81 \\
+        domain & eukaryota \\
+        internal\_stop\_codon\_count & 178 \\
+        internal\_stop\_codon\_percent & 2.4 \\
+        \hline
+    \end{tabular}
+    \caption{\textbf{BUSCO} evaluation for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:busco_scinmit_hicul}
+    \end{center}
+    \end{table}
+
+\subsection{Merqury evaluation}
+
+Found in \texttt{eval/merqury.qv} and \texttt{eval/merqury.scinmit\_hicul.hic.p\_ctg.spectra-cn.hist}. 
+
+Table \ref{tab:merqury_scinmit_hicul} shows the Merqury evaluation for scinmit\_hicul.hic.p\_ctg.fa.
+Figure \ref{fig:k_mer_spectrum} and \ref{fig:k_mer_spectrum_zoom} show the K-mer spectrum for scinmit\_hicul.hic.p\_ctg.fa.
+The graphs were generated using the \texttt{plot\_kmer\_spectra.py} script.
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & Value \\
+        \hline
+        Number of false k-mers & 10415 \\
+        Total length & 1807575410 \\
+        QV & 65.6166 \\
+        Estimated error rate & 2.74375e-07 \\
+        \hline
+    \end{tabular}
+    \caption{\textbf{Merqury} evaluation for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:merqury_scinmit_hicul}
+    \end{center}
+    \end{table}
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{k_mer_spectrum.png}
+        \caption{\textbf{Merqury} K-mer spectrum for \\ scinmit\_hicul.hic.p\_ctg.fa}
+        \label{fig:k_mer_spectrum}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{k_mer_spectrum_zoomed.png}
+        \caption{Zoomed K-mer spectrum for scinmit\_hicul.hic.p\_ctg.fa}
+        \label{fig:k_mer_spectrum_zoom}
+    \end{minipage}
+\end{figure}
+
+\subsection{Inspector evaluation}
+
+Found in \texttt{eval/inspector/summary\_statistics}.
+
+Tables \ref{tab:inspector_scinmit_hicul_alignment}, \ref{tab:inspector_scinmit_hicul_structural_errors}, \ref{tab:inspector_scinmit_hicul_small_scale_errors}, and \ref{tab:inspector_scinmit_hicul_qv} show the Inspector evaluation for scinmit\_hicul.hic.p\_ctg.fa.
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & Value \\
+        \hline
+        Mapping rate /\% & 99.88 \\
+        Split-read rate /\% & 3.76 \\
+        Depth & 68.5504 \\
+        Mapping rate in large contigs /\% & 99.18 \\
+        Split-read rate in large contigs /\% & 3.79 \\
+        Depth in large conigs & 68.4291 \\
+        \hline
+    \end{tabular}
+
+    \caption{\textbf{Inspector} statistics of read to contig alignment for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:inspector_scinmit_hicul_alignment}
+    \end{center}
+    \end{table}
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & Value \\
+        \hline
+        Structural error & 126 \\
+        Expansion & 60 \\
+        Collapse & 42 \\
+        Haplotype switch & 15 \\
+        Inversion & 9 \\
+        \hline
+    \end{tabular}
+    \caption{\textbf{Inspector} statistics of structural errors for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:inspector_scinmit_hicul_structural_errors}
+    \end{center}
+    \end{table}
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & Value \\
+        \hline
+        Small-scale assembly error /per Mbp & 5086.222664590693 \\
+        Total small-scale assembly error & 9193668 \\
+        Base substitution & 8131903 \\
+        Small-scale expansion & 590427 \\
+        Small-scale collapse & 471338 \\
+        \hline
+    \end{tabular}
+    \caption{\textbf{Inspector} statistics of small-scale assembly errors for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:inspector_scinmit_hicul_small_scale_errors}
+    \end{center}
+    \end{table}
+
+\begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        Metric & Value \\
+        \hline
+        QV & 22.897974097278006 \\
+        \hline
+    \end{tabular}
+    \caption{\textbf{Inspector} QV for scinmit\_hicul.hic.p\_ctg.fa}
+    \label{tab:inspector_scinmit_hicul_qv}
+    \end{center}
+    \end{table}
+
 
 \begin{thebibliography}{9}
 \bibitem{olc_lecture_notes}
